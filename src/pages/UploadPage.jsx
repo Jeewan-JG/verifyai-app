@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Upload, FileText, X, CheckCircle, Lock, AlertCircle } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 const ACCEPTED = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain']
 
@@ -39,12 +40,17 @@ export default function UploadPage() {
     setError(null)
 
     try {
+      // Get current user's ID to associate candidate with their account
+      const { data: { user } } = await supabase.auth.getUser()
+      const userId = user?.id || ''
+
       // Send everything directly to FastAPI — it handles DB + storage + analysis
       const fd = new FormData()
       fd.append('full_name', form.full_name)
       fd.append('email',     form.email)
       fd.append('role',      form.role)
       fd.append('location',  form.location)
+      fd.append('user_id',   userId)
       fd.append('file',      file)
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/`, {
