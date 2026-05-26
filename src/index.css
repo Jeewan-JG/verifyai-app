@@ -493,7 +493,7 @@ a { color: inherit; text-decoration: none; }
   border-right: 1px solid var(--line);
 }
 .login-mark { display: flex; align-items: center; gap: 12px; }
-.login-headline { font-size: 40px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
+.login-headline { font-size: 46px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
 .login-headline span { color: var(--teal); }
 .login-tag { color: var(--text-2); font-size: 15px; max-width: 420px; line-height: 1.55; margin-top: 18px; }
 .login-features { display: flex; flex-direction: column; gap: 14px; margin-top: 32px; }

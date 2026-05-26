@@ -228,7 +228,7 @@ export default function LoginPage() {
       <div className="login-left" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div>
           <div className="login-mark">
-            <svg width="210" height="58" viewBox="100 40 870 255" xmlns="http://www.w3.org/2000/svg">
+            <svg width="400" height="117" viewBox="100 40 870 255" xmlns="http://www.w3.org/2000/svg">
               {/* Animated checkmark */}
               <g transform="translate(124 112)">
                 <path d="M0 18 66 172 152 0" fill="none" stroke="#14b8a6" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="420" strokeDashoffset="420">
@@ -248,7 +248,7 @@ export default function LoginPage() {
               </g>
             </svg>
           </div>
-          <div className="login-headline" style={{ marginTop: 32 }}>
+          <div className="login-headline" style={{ marginTop: 16 }}>
             Trust Intelligence<br />
             <span>for Modern Hiring</span>
           </div>
