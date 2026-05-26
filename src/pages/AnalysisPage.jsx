@@ -482,6 +482,101 @@ export default function AnalysisPage() {
         </div>
       )}
 
+      {/* Link Verification */}
+      {result && (
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Link size={15} color="var(--teal)" /> Link Verification
+              {result.link_verification?.length > 0 && (
+                <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 500, background: 'var(--bg-3)', borderRadius: 20, padding: '2px 10px', border: '1px solid var(--line)' }}>
+                  {result.link_verification.length} link{result.link_verification.length !== 1 ? 's' : ''} scanned
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>
+              AI agent scans the CV for external links — LinkedIn, GitHub, university sites, project portfolios — fetches each one and verifies the content matches the candidate's claims
+            </div>
+          </div>
+
+          {(!result.link_verification || result.link_verification.length === 0) ? (
+            <div style={{ padding: '24px 0', textAlign: 'center', color: 'var(--text-2)', fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <Link size={28} strokeWidth={1} color="var(--text-3)" />
+              <div style={{ fontWeight: 500 }}>No external links found in this CV</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Links to LinkedIn, GitHub, project portfolios or university sites will be automatically verified on the next analysis run</div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {result.link_verification.map((lv, i) => {
+                const statusCfg = {
+                  verified:       { color: '#34d399', label: '✓ Verified',       bg: 'rgba(52,211,153,0.07)'  },
+                  unverified:     { color: '#f5a524', label: '~ Unverified',     bg: 'rgba(245,165,36,0.07)'  },
+                  suspicious:     { color: '#f43f5e', label: '✗ Suspicious',     bg: 'rgba(244,63,94,0.07)'   },
+                  inaccessible:   { color: '#64748b', label: '✗ Inaccessible',   bg: 'var(--bg-3)'             },
+                  login_required: { color: '#a78bfa', label: '⚠ Login Required', bg: 'rgba(167,139,250,0.07)' },
+                }[lv.status] || { color: '#64748b', label: '? Unknown', bg: 'var(--bg-3)' }
+
+                return (
+                  <div key={i} style={{ background: statusCfg.bg, borderRadius: 10, padding: '14px 16px', border: `1px solid ${statusCfg.color}28` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: statusCfg.color, background: statusCfg.color + '20', borderRadius: 20, padding: '2px 10px', flexShrink: 0 }}>
+                          {statusCfg.label}
+                        </span>
+                        <span style={{ fontSize: 11, color: 'var(--text-3)', background: 'var(--bg-3)', borderRadius: 4, padding: '2px 8px', border: '1px solid var(--line)', flexShrink: 0 }}>
+                          {lv.type}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                        <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Match:</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(lv.match_score || 0) }}>{lv.match_score ?? '—'}/100</span>
+                      </div>
+                    </div>
+
+                    <a href={lv.url} target="_blank" rel="noopener noreferrer"
+                      style={{ fontSize: 12, color: 'var(--teal)', display: 'inline-flex', alignItems: 'center', gap: 4, marginBottom: 8, wordBreak: 'break-all', textDecoration: 'none' }}
+                      onClick={e => e.stopPropagation()}>
+                      <ExternalLink size={11} style={{ flexShrink: 0 }} />
+                      {lv.url.length > 72 ? lv.url.slice(0, 72) + '…' : lv.url}
+                    </a>
+
+                    {lv.finding && (
+                      <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.55, marginBottom: lv.flags?.length > 0 ? 8 : 0 }}>
+                        {lv.finding}
+                      </div>
+                    )}
+
+                    {lv.flags && lv.flags.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}>
+                        {lv.flags.map((flag, fi) => (
+                          <span key={fi} style={{ fontSize: 11, color: '#f43f5e', background: 'rgba(244,63,94,0.1)', borderRadius: 4, padding: '2px 8px', border: '1px solid rgba(244,63,94,0.2)' }}>
+                            ⚠ {flag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {/* Summary bar */}
+              {(() => {
+                const verified   = result.link_verification.filter(l => l.status === 'verified').length
+                const suspicious = result.link_verification.filter(l => l.status === 'suspicious').length
+                const total      = result.link_verification.length
+                return (
+                  <div style={{ marginTop: 4, padding: '10px 14px', background: 'var(--bg-3)', borderRadius: 8, fontSize: 12, color: 'var(--text-2)', display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                    <span style={{ color: '#34d399', fontWeight: 600 }}>✓ {verified} verified</span>
+                    {suspicious > 0 && <span style={{ color: '#f43f5e', fontWeight: 600 }}>✗ {suspicious} suspicious</span>}
+                    <span style={{ color: 'var(--text-3)' }}>{total - verified - suspicious} could not be fully assessed</span>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Risk Intelligence Signals */}
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
