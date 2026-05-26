@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { User, Shield, Bell, Database, ChevronRight, Save, Check } from 'lucide-react'
+import { User, Shield, Bell, Database, ChevronRight, Save, Check, Cpu, ShieldCheck, Fingerprint } from 'lucide-react'
 
 const Section = ({ title, description, Icon, children }) => (
   <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
@@ -48,6 +48,7 @@ export default function SettingsPage() {
   })
   const [retention, setRetention] = useState('12')
   const [gdpr, setGdpr] = useState({ autoDelete: false, anonymise: true })
+  const [governance, setGovernance] = useState({ explainability: true, humanOversight: true, euAiAct: true, threshold: 'disabled' })
 
   const handleSave = () => {
     setSaved(true)
@@ -131,6 +132,58 @@ export default function SettingsPage() {
             <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>Replace PII with anonymised identifiers</div>
           </div>
           <Toggle checked={gdpr.anonymise} onChange={v => setGdpr(g => ({ ...g, anonymise: v }))} />
+        </div>
+      </Section>
+
+      {/* AI Governance */}
+      <Section title="AI Governance" description="EU AI Act compliance, explainability controls and human oversight settings" Icon={Cpu}>
+        <Field label="Explainability mode" hint="Show evidence citations and reasoning for every trust score decision">
+          <Toggle checked={governance.explainability} onChange={v => setGovernance(g => ({ ...g, explainability: v }))} />
+        </Field>
+        <Field label="Human oversight required" hint="Flag candidates for mandatory human review before final hiring decisions">
+          <Toggle checked={governance.humanOversight} onChange={v => setGovernance(g => ({ ...g, humanOversight: v }))} />
+        </Field>
+        <Field label="EU AI Act compliance mode" hint="Enforce high-risk AI system requirements — hiring AI is explicitly covered">
+          <Toggle checked={governance.euAiAct} onChange={v => setGovernance(g => ({ ...g, euAiAct: v }))} />
+        </Field>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 500 }}>Auto-advance confidence threshold</div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>Minimum trust score to advance a candidate without manual review</div>
+          </div>
+          <select className="input" style={{ width: 210 }} value={governance.threshold} onChange={e => setGovernance(g => ({ ...g, threshold: e.target.value }))}>
+            <option value="disabled">Disabled — always manual review</option>
+            <option value="80">80+ (High confidence only)</option>
+            <option value="70">70+ (Recommended)</option>
+            <option value="60">60+ (Permissive)</option>
+          </select>
+        </div>
+      </Section>
+
+      {/* Trust Intelligence */}
+      <Section title="Trust Intelligence" description="Verification sources and analysis configuration" Icon={Fingerprint}>
+        <Field label="AI-generated content detection" hint="Detect GPT, Claude and LLM-written CVs automatically">
+          <Toggle checked={true} onChange={() => {}} />
+        </Field>
+        <Field label="Behavioural consistency analysis" hint="Analyse language patterns and narrative coherence">
+          <Toggle checked={true} onChange={() => {}} />
+        </Field>
+        <Field label="LinkedIn consistency check" hint="Cross-reference CV claims against LinkedIn profile (coming soon)">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-3)', background: 'var(--bg-3)', borderRadius: 6, padding: '2px 8px', border: '1px solid var(--line)' }}>Coming Soon</span>
+          </div>
+        </Field>
+        <Field label="Identity verification" hint="Passport and government ID document checks (coming soon)">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, color: 'var(--text-3)', background: 'var(--bg-3)', borderRadius: 6, padding: '2px 8px', border: '1px solid var(--line)' }}>Coming Soon</span>
+          </div>
+        </Field>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 500 }}>Deepfake interview risk detection</div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>Monitor video interviews for AI-generated or deepfake content</div>
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--text-3)', background: 'var(--bg-3)', borderRadius: 6, padding: '2px 8px', border: '1px solid var(--line)' }}>Coming Soon</span>
         </div>
       </Section>
 

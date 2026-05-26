@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { ArrowLeft, Mail, RefreshCw, FileText, MapPin, Calendar, Tag, Clock, ShieldCheck, ShieldAlert, AlertTriangle, Save, ExternalLink, Trash2, Lock, Info, BookOpen, Fingerprint } from 'lucide-react'
+import { ArrowLeft, Mail, RefreshCw, FileText, MapPin, Calendar, Tag, Clock, ShieldCheck, ShieldAlert, AlertTriangle, Save, ExternalLink, Trash2, Lock, Info, BookOpen, Fingerprint, Award, Zap, Video, Link } from 'lucide-react'
 
 const DIMS = [
   { key: 'timeline_consistency',       label: 'Identity & Employment Consistency', weight: '25%', desc: 'Cross-references employment history for timeline gaps, overlaps and unverifiable periods' },
@@ -274,6 +274,76 @@ export default function AnalysisPage() {
               ? <a href={candidate.linkedin_url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--teal)' }}>LinkedIn profile</a>
               : 'No LinkedIn'}
           </div>
+        </div>
+      </div>
+
+      {/* Candidate Trust Profile — 6 verification dimensions */}
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ShieldCheck size={15} color="var(--teal)" /> Candidate Trust Profile
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>
+            Multi-layer verification across 6 trust dimensions — Identity · Credentials · Digital Presence · AI Content · Behaviour · Interview Integrity
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(188px, 1fr))', gap: 10 }}>
+          {[
+            {
+              label: 'CV Authenticity',
+              Icon: FileText,
+              status: result ? (result.trust_score >= 70 ? 'verified' : result.trust_score >= 40 ? 'review' : 'risk') : 'pending',
+              desc: result ? `Trust score ${result.trust_score}/100` : 'Run trust intelligence',
+            },
+            {
+              label: 'Identity Verification',
+              Icon: Fingerprint,
+              status: 'coming',
+              desc: 'Passport & ID document check',
+            },
+            {
+              label: 'LinkedIn Consistency',
+              Icon: Link,
+              status: candidate?.linkedin_url ? 'pending' : 'coming',
+              desc: candidate?.linkedin_url ? 'Profile URL provided — analysis coming' : 'No LinkedIn URL provided',
+            },
+            {
+              label: 'Qualification Verification',
+              Icon: Award,
+              status: result ? (result.certification_plausibility >= 70 ? 'verified' : result.certification_plausibility >= 40 ? 'review' : 'risk') : 'pending',
+              desc: result ? `Qualification score ${result.certification_plausibility}/100` : 'Pending analysis',
+            },
+            {
+              label: 'AI Content Detection',
+              Icon: Zap,
+              status: result ? (result.ai_text_detection >= 70 ? 'verified' : result.ai_text_detection >= 40 ? 'review' : 'risk') : 'pending',
+              desc: result ? `AI content score ${result.ai_text_detection}/100` : 'Pending analysis',
+            },
+            {
+              label: 'Deepfake Interview Risk',
+              Icon: Video,
+              status: 'coming',
+              desc: 'Video interview integrity monitor',
+            },
+          ].map(item => {
+            const cfg = {
+              verified: { color: '#34d399', bg: 'rgba(52,211,153,0.08)', label: '✓ Verified'      },
+              review:   { color: '#f5a524', bg: 'rgba(245,165,36,0.08)', label: '⚠ Review'        },
+              risk:     { color: '#f43f5e', bg: 'rgba(244,63,94,0.08)', label: '✗ Risk Detected'  },
+              pending:  { color: '#64748b', bg: 'var(--bg-3)',           label: '○ Pending'        },
+              coming:   { color: 'var(--text-3)', bg: 'var(--bg-3)',     label: '→ Coming Soon'    },
+            }[item.status]
+            return (
+              <div key={item.label} style={{ background: cfg.bg, borderRadius: 10, padding: 14, border: `1px solid ${cfg.color}33` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <item.Icon size={14} color={cfg.color} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: cfg.color, letterSpacing: '0.04em' }}>{cfg.label}</span>
+                </div>
+                <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 4, color: 'var(--text)' }}>{item.label}</div>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', lineHeight: 1.4 }}>{item.desc}</div>
+              </div>
+            )
+          })}
         </div>
       </div>
 

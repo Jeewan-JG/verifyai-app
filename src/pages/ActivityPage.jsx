@@ -4,10 +4,10 @@ import { supabase } from '../lib/supabase'
 import { Activity, Upload, BarChart2, RefreshCw, UserCheck, Filter } from 'lucide-react'
 
 const EVENT_TYPES = {
-  uploaded:  { label: 'CV Uploaded',       Icon: Upload,      color: 'var(--teal)' },
-  reviewed:  { label: 'Analysis Complete',  Icon: BarChart2,   color: '#34d399'     },
-  rerun:     { label: 'Analysis Re-run',    Icon: RefreshCw,   color: '#f5a524'     },
-  pending:   { label: 'Candidate Added',    Icon: UserCheck,   color: '#64748b'     },
+  uploaded:  { label: 'Candidate Added to Trust Pipeline',      Icon: Upload,      color: 'var(--teal)' },
+  reviewed:  { label: 'Trust Intelligence Report Generated',    Icon: BarChart2,   color: '#34d399'     },
+  rerun:     { label: 'Trust Intelligence Re-run',              Icon: RefreshCw,   color: '#f5a524'     },
+  pending:   { label: 'Candidate Profile Created',              Icon: UserCheck,   color: '#64748b'     },
 }
 
 export default function ActivityPage() {
@@ -72,8 +72,8 @@ export default function ActivityPage() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 18, fontWeight: 700 }}>Activity</div>
-          <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 2 }}>Audit log of all actions in your workspace</div>
+          <div style={{ fontSize: 18, fontWeight: 700 }}>Audit Log</div>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 2 }}>Complete, immutable record of all platform actions for compliance and AI governance</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Filter size={13} color="var(--text-3)" />
@@ -89,15 +89,15 @@ export default function ActivityPage() {
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Activity size={15} />
-          <span style={{ fontWeight: 600, fontSize: 14 }}>Recent Events</span>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>Audit Trail</span>
           <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-2)' }}>{filtered.length} events</span>
         </div>
 
         {filtered.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-2)' }}>
             <Activity size={32} strokeWidth={1} style={{ margin: '0 auto 12px', display: 'block', color: 'var(--text-3)' }} />
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>No activity yet</div>
-            <div style={{ fontSize: 13 }}>Actions will appear here as you use the platform</div>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Audit trail is empty</div>
+            <div style={{ fontSize: 13 }}>All platform actions are logged here for compliance and governance</div>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { Users, AlertTriangle, ShieldAlert, Star, FileText, Upload, BarChart2, Trash2, CheckSquare, Square } from 'lucide-react'
+import { Users, AlertTriangle, ShieldAlert, Star, FileText, Upload, BarChart2, Trash2, CheckSquare, Square, ShieldCheck, Fingerprint, Zap, Lock } from 'lucide-react'
 
 function useCountUp(target, duration = 900) {
   const [count, setCount] = useState(0)
@@ -152,9 +152,33 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* Platform Category Banner */}
+      <div style={{ background: 'linear-gradient(135deg, rgba(20,184,166,0.08) 0%, rgba(20,184,166,0.03) 100%)', border: '1px solid rgba(20,184,166,0.2)', borderRadius: 12, padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(20,184,166,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Fingerprint size={18} color="var(--teal)" />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text)' }}>Trust Intelligence Platform</div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 1 }}>Candidate authenticity · Recruiter accountability · Explainable AI hiring · Hiring compliance</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          {[
+            { icon: ShieldCheck, label: 'EU AI Act Compliant' },
+            { icon: Lock,        label: 'UK GDPR Art. 6(1)(f)' },
+            { icon: Zap,         label: 'Explainable AI' },
+          ].map(({ icon: Icon, label }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--teal)', fontWeight: 500 }}>
+              <Icon size={11} /> {label}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
-        <StatCard label="Candidates Screened" value={stats.total}            accent="var(--teal)" Icon={Users}         delay={0} />
+        <StatCard label="Candidates Verified" value={stats.total}            accent="var(--teal)" Icon={Users}         delay={0} />
         <StatCard label="High Risk"           value={stats.high}            accent="#f43f5e"     Icon={ShieldAlert}   delay={80} />
         <StatCard label="Medium Risk"         value={stats.medium}          accent="#f5a524"     Icon={AlertTriangle} delay={160} />
         <StatCard label="Average Trust Score" value={stats.avgScore || '—'} accent="var(--teal)" Icon={Star}          delay={240} />
@@ -166,7 +190,7 @@ export default function DashboardPage() {
 
         {/* Header bar */}
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: 600 }}>Recently Screened</span>
+          <span style={{ fontWeight: 600 }}>Recently Verified</span>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             {selectMode && selected.length > 0 && (
               <button className="btn btn-sm"

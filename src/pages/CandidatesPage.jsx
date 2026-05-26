@@ -224,16 +224,16 @@ export default function CandidatesPage() {
           onClear={() => setDateRange({ from: '', to: '' })}
         />
         <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => navigate('/upload')}>
-          <Upload size={14} /> Upload CV
+          <Upload size={14} /> Add Candidate
         </button>
       </div>
 
       {/* Stats bar */}
-      <div style={{ display: 'flex', gap: 20, fontSize: 13, color: 'var(--text-2)' }}>
-        <span><b style={{ color: 'var(--text)' }}>{candidates.length}</b> total</span>
+      <div style={{ display: 'flex', gap: 20, fontSize: 13, color: 'var(--text-2)', flexWrap: 'wrap' }}>
+        <span><b style={{ color: 'var(--text)' }}>{candidates.length}</b> in trust pipeline</span>
         <span><b style={{ color: '#f43f5e' }}>{candidates.filter(c => c.analysis_results?.[0]?.risk_level === 'high').length}</b> high risk</span>
         <span><b style={{ color: '#f5a524' }}>{candidates.filter(c => c.analysis_results?.[0]?.risk_level === 'medium').length}</b> medium risk</span>
-        <span><b style={{ color: '#34d399' }}>{candidates.filter(c => c.analysis_results?.[0]?.risk_level === 'low').length}</b> low risk</span>
+        <span><b style={{ color: '#34d399' }}>{candidates.filter(c => c.analysis_results?.[0]?.risk_level === 'low').length}</b> verified</span>
         <span><b style={{ color: 'var(--text)' }}>{filtered.length}</b> showing</span>
       </div>
 
@@ -243,13 +243,13 @@ export default function CandidatesPage() {
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-2)' }}>
             <Users size={32} strokeWidth={1} style={{ margin: '0 auto 12px', display: 'block', color: 'var(--text-3)' }} />
             <div style={{ fontWeight: 600, marginBottom: 6 }}>
-              {candidates.length === 0 ? 'No candidates yet' : 'No results found'}
+              {candidates.length === 0 ? 'No candidates in trust pipeline' : 'No results found'}
             </div>
             <div style={{ fontSize: 13, marginBottom: 20 }}>
-              {candidates.length === 0 ? 'Upload your first CV to get started' : 'Try adjusting your search or filters'}
+              {candidates.length === 0 ? 'Add your first candidate to begin trust intelligence analysis' : 'Try adjusting your search or filters'}
             </div>
             {candidates.length === 0 && (
-              <button className="btn btn-primary" onClick={() => navigate('/upload')}>Upload CV</button>
+              <button className="btn btn-primary" onClick={() => navigate('/upload')}>Add Candidate</button>
             )}
           </div>
         ) : (
