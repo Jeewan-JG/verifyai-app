@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
-  <rect width="256" height="256" rx="56" fill="#07101a"/>
-  <path d="M46 58 102 198 156 58" fill="none" stroke="#e6edf2" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="360" stroke-dashoffset="360">
-    <animate attributeName="stroke-dashoffset" values="360;0;0;360" keyTimes="0;.35;.8;1" dur="3s" repeatCount="indefinite"/>
+  <defs><linearGradient id="g1a" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#14b8a6"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs>
+  <rect width="256" height="256" rx="58" fill="#07101a"/>
+  <path d="M128 30 220 128 128 226 36 128Z" fill="#0d1b24" stroke="url(#g1a)" stroke-width="12" stroke-linejoin="round">
+    <animate attributeName="stroke-opacity" values=".55;1;.55" dur="2.2s" repeatCount="indefinite"/>
   </path>
-  <path d="M141 198 196 58" fill="none" stroke="#14b8a6" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="210" stroke-dashoffset="210">
-    <animate attributeName="stroke-dashoffset" values="210;210;0;0;210" keyTimes="0;.2;.5;.82;1" dur="3s" repeatCount="indefinite"/>
+  <path d="M84 130 116 162 176 92" fill="none" stroke="#f8fafc" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="180" stroke-dashoffset="180">
+    <animate attributeName="stroke-dashoffset" values="180;0;0;180" keyTimes="0;.35;.82;1" dur="3s" repeatCount="indefinite"/>
   </path>
-  <path d="M91 133l26 25 55-69" fill="none" stroke="#14b8a6" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
