@@ -1,8 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../lib/AuthContext'
 
 // Animated network graph
 function NetworkGraph() {
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    let id
+    const loop = () => { setTick(t => t + 1); id = requestAnimationFrame(loop) }
+    id = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(id)
+  }, [])
+
   const cx = 260, cy = 210
   const nodes = [
     { id: 'core',      x: cx,       y: cy,       label: 'Verify.AI core', fraud: false, core: true },
@@ -17,9 +25,24 @@ function NetworkGraph() {
     { id: 'skills',    x: cx + 140, y: cy + 155, label: 'Skills graph',        fraud: false },
   ]
 
-  const edges = nodes.filter(n => !n.core).map(n => ({
+  const t = tick / 60 // time in seconds at 60fps
+
+  // Animate each satellite node with sine wave float
+  const animatedNodes = nodes.map((n, i) => {
+    if (n.core) return n
+    const floatY = Math.sin(t * 0.8 + i * 0.9) * 3.5
+    const floatX = Math.cos(t * 0.5 + i * 1.1) * 2
+    return { ...n, x: n.x + floatX, y: n.y + floatY }
+  })
+
+  const coreGlow = 22 + Math.sin(t * 1.2) * 6  // pulsing glow radius
+  const coreOpacity = 0.15 + Math.sin(t * 1.2) * 0.08
+
+  const edges = animatedNodes.filter(n => !n.core).map(n => ({
     x1: cx, y1: cy, x2: n.x, y2: n.y, fraud: n.fraud
   }))
+
+  const dashOffset = (t * 12) % 8  // animated dash
 
   return (
     <div style={{ position: 'relative', width: '100%', maxWidth: 520, margin: '0 auto' }}>
@@ -34,36 +57,45 @@ function NetworkGraph() {
           </filter>
         </defs>
 
-        {/* Glow behind center */}
-        <circle cx={cx} cy={cy} r={60} fill="url(#glow)" filter="url(#blur)" />
+        {/* Pulsing glow behind center */}
+        <circle cx={cx} cy={cy} r={coreGlow + 20} fill="url(#glow)" filter="url(#blur)" opacity={coreOpacity * 2} />
+        <circle cx={cx} cy={cy} r={coreGlow} fill="#14b8a6" fillOpacity={coreOpacity} />
 
         {/* Edges */}
         {edges.map((e, i) => (
           <line key={i}
             x1={e.x1} y1={e.y1} x2={e.x2} y2={e.y2}
             stroke={e.fraud ? '#f87171' : '#14b8a6'}
-            strokeWidth={e.fraud ? 1 : 1}
-            strokeOpacity={e.fraud ? 0.5 : 0.3}
-            strokeDasharray={e.fraud ? '4 4' : 'none'}
+            strokeWidth={1.2}
+            strokeOpacity={e.fraud ? 0.55 : 0.35}
+            strokeDasharray={e.fraud ? '4 4' : '6 3'}
+            strokeDashoffset={e.fraud ? -dashOffset : dashOffset}
           />
         ))}
 
         {/* Node dots */}
-        {nodes.map(n => (
+        {animatedNodes.map((n, i) => {
+          const pulse = n.core ? 0 : Math.sin(t * 1.1 + i * 0.7) * 1.2
+          return (
           <g key={n.id}>
-            {n.core && <circle cx={n.x} cy={n.y} r={22} fill="#14b8a6" fillOpacity={0.15} />}
+            {n.core && (
+              <circle cx={n.x} cy={n.y}
+                r={18 + Math.sin(t * 0.9) * 3}
+                fill="#14b8a6" fillOpacity={0.08}
+              />
+            )}
             <circle
               cx={n.x} cy={n.y}
-              r={n.core ? 12 : n.fraud ? 7 : 6}
+              r={(n.core ? 12 : n.fraud ? 7 : 6) + pulse}
               fill={n.core ? '#14b8a6' : n.fraud ? '#f87171' : '#14b8a6'}
-              fillOpacity={n.core ? 1 : n.fraud ? 0.9 : 0.7}
+              fillOpacity={n.core ? 1 : n.fraud ? 0.9 : 0.75}
             />
           </g>
-        ))}
+        )})}
+
 
         {/* Node labels */}
-        {nodes.filter(n => !n.core).map(n => {
-          // Calculate label offset to avoid overlap
+        {animatedNodes.filter(n => !n.core).map(n => {
           const dx = n.x - cx, dy = n.y - cy
           const len = Math.sqrt(dx*dx + dy*dy)
           const ox = (dx / len) * 14, oy = (dy / len) * 14
@@ -147,7 +179,7 @@ function StepCards() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginTop: 16 }}>
       {steps.map((s, i) => (
-        <div key={i} style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: '14px 12px', position: 'relative' }}>
+        <div key={i} className="step-card" style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 10, padding: '14px 12px', position: 'relative' }}>
           <div style={{ fontSize: 10, color: '#14b8a6', fontFamily: 'monospace', fontWeight: 600, marginBottom: 10,
             background: 'rgba(20,184,166,0.1)', display: 'inline-block', padding: '2px 7px', borderRadius: 4 }}>
             {s.num} · {s.tag}

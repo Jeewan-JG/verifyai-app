@@ -1,17 +1,52 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { Users, AlertTriangle, ShieldAlert, Star, FileText, Upload, BarChart2, Trash2, CheckSquare, Square } from 'lucide-react'
 
-const StatCard = ({ label, value, accent, Icon }) => (
-  <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 8, borderTop: `3px solid ${accent || 'var(--teal)'}` }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-      <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
-      {Icon && <Icon size={16} color={accent || 'var(--teal)'} strokeWidth={1.5} />}
+function useCountUp(target, duration = 900) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    if (!target) { setCount(0); return }
+    let start = null
+    const step = (ts) => {
+      if (!start) start = ts
+      const progress = Math.min((ts - start) / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      setCount(Math.floor(eased * target))
+      if (progress < 1) requestAnimationFrame(step)
+      else setCount(target)
+    }
+    requestAnimationFrame(step)
+  }, [target, duration])
+  return count
+}
+
+const StatCard = ({ label, value, accent, Icon, delay = 0 }) => {
+  const isNum = typeof value === 'number'
+  const animated = useCountUp(isNum ? value : 0)
+  const [visible, setVisible] = useState(false)
+  useEffect(() => { const t = setTimeout(() => setVisible(true), delay); return () => clearTimeout(t) }, [delay])
+
+  return (
+    <div
+      className="stat-card-anim"
+      style={{
+        background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12,
+        padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 8,
+        borderTop: `3px solid ${accent || 'var(--teal)'}`,
+        opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(12px)',
+        transition: `opacity .4s ease ${delay}ms, transform .4s cubic-bezier(.2,.8,.2,1) ${delay}ms`,
+      }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <span style={{ fontSize: 12, color: 'var(--text-2)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
+        {Icon && <Icon size={16} color={accent || 'var(--teal)'} strokeWidth={1.5} />}
+      </div>
+      <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: '-0.03em', fontFeatureSettings: '"tnum"' }}>
+        {isNum ? animated : value}
+      </div>
     </div>
-    <div style={{ fontSize: 34, fontWeight: 700, letterSpacing: '-0.03em' }}>{value}</div>
-  </div>
-)
+  )
+}
 
 const RiskBadge = ({ level }) => {
   const colours = { low: '#34d399', medium: '#f5a524', high: '#f43f5e' }
@@ -119,11 +154,11 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
-        <StatCard label="Candidates Screened" value={stats.total}            accent="var(--teal)" Icon={Users} />
-        <StatCard label="High Risk"           value={stats.high}            accent="#f43f5e"     Icon={ShieldAlert} />
-        <StatCard label="Medium Risk"         value={stats.medium}          accent="#f5a524"     Icon={AlertTriangle} />
-        <StatCard label="Average Trust Score" value={stats.avgScore || '—'} accent="var(--teal)" Icon={Star} />
-        <StatCard label="Low Risk"            value={stats.low}             accent="#34d399"     Icon={FileText} />
+        <StatCard label="Candidates Screened" value={stats.total}            accent="var(--teal)" Icon={Users}         delay={0} />
+        <StatCard label="High Risk"           value={stats.high}            accent="#f43f5e"     Icon={ShieldAlert}   delay={80} />
+        <StatCard label="Medium Risk"         value={stats.medium}          accent="#f5a524"     Icon={AlertTriangle} delay={160} />
+        <StatCard label="Average Trust Score" value={stats.avgScore || '—'} accent="var(--teal)" Icon={Star}          delay={240} />
+        <StatCard label="Low Risk"            value={stats.low}             accent="#34d399"     Icon={FileText}      delay={320} />
       </div>
 
       {/* Recent Candidates */}
