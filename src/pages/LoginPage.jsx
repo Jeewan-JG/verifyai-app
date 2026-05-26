@@ -228,9 +228,25 @@ export default function LoginPage() {
       <div className="login-left" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div>
           <div className="login-mark">
-            <div style={{ fontSize: 22, fontWeight: 700 }}>
-              Verify<span style={{ color: 'var(--teal)' }}>.AI</span>™
-            </div>
+            <svg width="210" height="58" viewBox="100 40 870 255" xmlns="http://www.w3.org/2000/svg">
+              {/* Animated checkmark */}
+              <g transform="translate(124 112)">
+                <path d="M0 18 66 172 152 0" fill="none" stroke="#14b8a6" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="420" strokeDashoffset="420">
+                  <animate attributeName="stroke-dashoffset" values="420;0;0;420" keyTimes="0;.36;.78;1" dur="3s" repeatCount="indefinite"/>
+                </path>
+                <path d="M34 112 68 146 123 76" fill="none" stroke="#e6edf2" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
+              </g>
+              {/* Verify.AI text with animated underline */}
+              <g transform="translate(330 154)">
+                <text x="0" y="0" fill="#e6edf2" fontFamily="Inter, Arial, sans-serif" fontSize="110" fontWeight="780" letterSpacing="-7">
+                  Verify<tspan fill="#14b8a6">.AI</tspan><tspan dx="9" dy="-58" fill="#7d8f9b" fontSize="26" letterSpacing="0">TM</tspan>
+                </text>
+                <rect x="6" y="42" width="610" height="2" fill="#1c3340"/>
+                <rect x="6" y="42" width="0" height="2" fill="#14b8a6">
+                  <animate attributeName="width" values="0;610;610;0" keyTimes="0;.42;.75;1" dur="3s" repeatCount="indefinite"/>
+                </rect>
+              </g>
+            </svg>
           </div>
           <div className="login-headline" style={{ marginTop: 32 }}>
             Trust Intelligence<br />
