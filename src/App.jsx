@@ -11,6 +11,8 @@ import ActivityPage from './pages/ActivityPage'
 import AlertsPage from './pages/AlertsPage'
 import SettingsPage from './pages/SettingsPage'
 import ReportPrintPage from './pages/ReportPrintPage'
+import ComplianceCenterPage from './pages/ComplianceCenterPage'
+import PlatformPage from './pages/PlatformPage'
 
 // Protect routes — redirect to login if not signed in
 const PrivateRoute = ({ children }) => {
@@ -38,6 +40,8 @@ export default function App() {
         <Route path="activity" element={<ActivityPage />} />
         <Route path="alerts" element={<AlertsPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="compliance" element={<ComplianceCenterPage />} />
+        <Route path="platform" element={<PlatformPage />} />
       </Route>
 
       {/* Print report — no sidebar/topbar */}

@@ -398,6 +398,90 @@ export default function AnalysisPage() {
         )}
       </div>
 
+      {/* Risk Reasoning Engine */}
+      {result && (
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Zap size={15} color="var(--teal)" /> Risk Reasoning Engine
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Evidence-based scoring rationale · Recruiter confidence metrics · Actionable findings</div>
+          </div>
+
+          {/* AI Verdict */}
+          {result.summary && (
+            <div style={{ background: scoreColor(result.trust_score) + '10', border: `1px solid ${scoreColor(result.trust_score)}30`, borderRadius: 10, padding: '14px 16px', marginBottom: 18 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: scoreColor(result.trust_score), textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>AI Verdict</div>
+              <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.65 }}>{result.summary}</div>
+            </div>
+          )}
+
+          {/* Two-column: evidence + recruiter confidence */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+
+            {/* Signal Evidence */}
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Signal Evidence</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {DIMS.map(d => {
+                  const val = result[d.key]
+                  if (!val) return null
+                  const color = scoreColor(val)
+                  const icon = val >= 70 ? '✓' : val >= 40 ? '⚠' : '✗'
+                  return (
+                    <div key={d.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12 }}>
+                      <span style={{ color, flexShrink: 0, fontWeight: 700, minWidth: 14 }}>{icon}</span>
+                      <span style={{ color: 'var(--text-2)', lineHeight: 1.4 }}>
+                        <span style={{ color: 'var(--text)', fontWeight: 500 }}>{d.label}</span>
+                        <span style={{ color: 'var(--text-3)' }}> — {val}/100</span>
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Recruiter Confidence Metrics */}
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Recruiter Confidence</div>
+
+              {DIMS.filter(d => (result[d.key] || 0) >= 70).length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 11, color: '#34d399', fontWeight: 600, marginBottom: 7, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#34d399', display: 'inline-block' }} /> Proceed with confidence
+                  </div>
+                  {DIMS.filter(d => (result[d.key] || 0) >= 70).map(d => (
+                    <div key={d.key} style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 4, paddingLeft: 13 }}>{d.label}</div>
+                  ))}
+                </div>
+              )}
+
+              {DIMS.filter(d => result[d.key] && result[d.key] >= 40 && result[d.key] < 70).length > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontSize: 11, color: '#f5a524', fontWeight: 600, marginBottom: 7, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f5a524', display: 'inline-block' }} /> Review recommended
+                  </div>
+                  {DIMS.filter(d => result[d.key] && result[d.key] >= 40 && result[d.key] < 70).map(d => (
+                    <div key={d.key} style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 4, paddingLeft: 13 }}>{d.label}</div>
+                  ))}
+                </div>
+              )}
+
+              {DIMS.filter(d => result[d.key] && result[d.key] < 40).length > 0 && (
+                <div>
+                  <div style={{ fontSize: 11, color: '#f43f5e', fontWeight: 600, marginBottom: 7, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f43f5e', display: 'inline-block' }} /> Investigate before proceeding
+                  </div>
+                  {DIMS.filter(d => result[d.key] && result[d.key] < 40).map(d => (
+                    <div key={d.key} style={{ fontSize: 12, color: 'var(--text-2)', marginBottom: 4, paddingLeft: 13 }}>{d.label}</div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Risk Intelligence Signals */}
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>

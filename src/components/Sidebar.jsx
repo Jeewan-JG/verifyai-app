@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import {
   LayoutDashboard, Users, Upload, BarChart2,
-  FileText, Activity, AlertTriangle, Settings, Search
+  FileText, Activity, AlertTriangle, Settings, Search,
+  ShieldCheck, Layers
 } from 'lucide-react'
 
 function useBadgeCounts() {
@@ -46,6 +47,8 @@ export default function Sidebar({ user, onSignOut }) {
     { to: '/reports',    label: 'Trust Reports',       Icon: FileText,        badge: null                       },
     { to: '/activity',   label: 'Audit Log',           Icon: Activity,        badge: null                       },
     { to: '/alerts',     label: 'Risk Signals',        Icon: AlertTriangle,   badge: counts.alerts              },
+    { to: '/compliance', label: 'Compliance Center',   Icon: ShieldCheck,     badge: null                       },
+    { to: '/platform',   label: 'Platform',            Icon: Layers,          badge: null                       },
   ]
 
   return (
