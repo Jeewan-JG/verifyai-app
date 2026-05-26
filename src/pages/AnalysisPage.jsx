@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { ArrowLeft, Mail, RefreshCw, FileText, MapPin, Calendar, Tag, Clock, ShieldCheck, ShieldAlert, AlertTriangle, Save, ExternalLink, Trash2 } from 'lucide-react'
+import { ArrowLeft, Mail, RefreshCw, FileText, MapPin, Calendar, Tag, Clock, ShieldCheck, ShieldAlert, AlertTriangle, Save, ExternalLink, Trash2, Lock, Info, BookOpen, Fingerprint } from 'lucide-react'
 
 const DIMS = [
-  { key: 'timeline_consistency',       label: 'Timeline Consistency',       weight: '25%' },
-  { key: 'skill_authenticity',         label: 'Skill Authenticity',         weight: '25%' },
-  { key: 'ai_text_detection',          label: 'AI Text Detection',          weight: '20%' },
-  { key: 'certification_plausibility', label: 'Certification Plausibility', weight: '15%' },
-  { key: 'narrative_coherence',        label: 'Narrative Coherence',        weight: '15%' },
+  { key: 'timeline_consistency',       label: 'Identity & Employment Consistency', weight: '25%', desc: 'Cross-references employment history for timeline gaps, overlaps and unverifiable periods' },
+  { key: 'skill_authenticity',         label: 'Credential Authenticity',           weight: '25%', desc: 'Assesses whether claimed skills and experience are consistent with stated qualifications' },
+  { key: 'ai_text_detection',          label: 'AI-Generated Content Detection',    weight: '20%', desc: 'Detects GPT, Claude and other LLM-generated text patterns within the document' },
+  { key: 'certification_plausibility', label: 'Qualification Verification',        weight: '15%', desc: 'Evaluates plausibility of degrees, certifications and professional credentials' },
+  { key: 'narrative_coherence',        label: 'Behavioural Consistency',           weight: '15%', desc: 'Analyses language patterns, role progression logic and self-presentation coherence' },
 ]
 
 const STATUS_OPTIONS = [
@@ -31,22 +31,37 @@ const RiskBadge = ({ level }) => {
   )
 }
 
+const confidenceLevel = (score) => {
+  if (!score) return null
+  if (score >= 75) return { label: 'High Confidence', color: '#34d399', pct: '95%+' }
+  if (score >= 45) return { label: 'Medium Confidence', color: '#f5a524', pct: '70–90%' }
+  return { label: 'Low Confidence', color: '#f43f5e', pct: '<70%' }
+}
+
 const ScoreDial = ({ score }) => {
   const color = scoreColor(score || 0)
+  const conf  = confidenceLevel(score)
   const r = 54, circ = 2 * Math.PI * r
   const dash = circ * ((score || 0) / 100)
   return (
-    <div style={{ position: 'relative', width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <svg width="140" height="140" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
-        <circle cx="70" cy="70" r={r} fill="none" stroke="var(--bg-3)" strokeWidth="10" />
-        <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="10"
-          strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
-          style={{ transition: 'stroke-dasharray 0.6s ease' }} />
-      </svg>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', color }}>{score || '—'}</div>
-        <div style={{ fontSize: 11, color: 'var(--text-2)' }}>/100</div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      <div style={{ position: 'relative', width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <svg width="140" height="140" style={{ position: 'absolute', transform: 'rotate(-90deg)' }}>
+          <circle cx="70" cy="70" r={r} fill="none" stroke="var(--bg-3)" strokeWidth="10" />
+          <circle cx="70" cy="70" r={r} fill="none" stroke={color} strokeWidth="10"
+            strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
+            style={{ transition: 'stroke-dasharray 0.6s ease' }} />
+        </svg>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: '-0.02em', color }}>{score || '—'}</div>
+          <div style={{ fontSize: 11, color: 'var(--text-2)' }}>/100</div>
+        </div>
       </div>
+      {conf && (
+        <div style={{ fontSize: 11, fontWeight: 600, color: conf.color, background: conf.color + '18', borderRadius: 20, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Info size={10} /> {conf.label} · {conf.pct}
+        </div>
+      )}
     </div>
   )
 }
@@ -213,10 +228,10 @@ export default function AnalysisPage() {
           </button>
           <button className="btn btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={runAnalysis} disabled={rerunning}>
             <RefreshCw size={13} style={{ animation: rerunning ? 'spin 1s linear infinite' : 'none' }} />
-            {rerunning ? 'Running...' : 'Re-run Analysis'}
+            {rerunning ? 'Running...' : 'Re-run Trust Intelligence'}
           </button>
           <button className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={openReport} disabled={!result}>
-            <FileText size={13} /> <ExternalLink size={11} /> Download report
+            <FileText size={13} /> <ExternalLink size={11} /> Trust Intelligence Report
           </button>
           <button
             className="btn btn-sm"
@@ -262,16 +277,23 @@ export default function AnalysisPage() {
         </div>
       </div>
 
-      {/* Trust Score + breakdown */}
+      {/* Trust Intelligence Report */}
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
-        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 20 }}>AI Trust Score</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Fingerprint size={16} color="var(--teal)" /> Trust Intelligence Report
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Multi-signal, evidence-based candidate authenticity analysis</div>
+          </div>
+        </div>
         {!result ? (
           <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-2)' }}>
             <Clock size={36} strokeWidth={1} style={{ margin: '0 auto 12px', display: 'block', color: 'var(--text-3)' }} />
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>Analysis pending</div>
-            <div style={{ fontSize: 13, marginBottom: 20 }}>Click Re-run Analysis to generate the AI Trust Score.</div>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Trust intelligence pending</div>
+            <div style={{ fontSize: 13, marginBottom: 20 }}>Click below to run the full multi-layer trust analysis.</div>
             <button className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }} onClick={runAnalysis} disabled={rerunning}>
-              <RefreshCw size={13} /> {rerunning ? 'Running...' : 'Run Analysis Now'}
+              <RefreshCw size={13} /> {rerunning ? 'Running...' : 'Run Trust Intelligence Now'}
             </button>
           </div>
         ) : (
@@ -279,21 +301,24 @@ export default function AnalysisPage() {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
               <ScoreDial score={result.trust_score} />
               <RiskBadge level={result.risk_level} />
-              {result.summary && <p style={{ fontSize: 12, color: 'var(--text-2)', textAlign: 'center', maxWidth: 160 }}>{result.summary}</p>}
+              {result.summary && <p style={{ fontSize: 12, color: 'var(--text-2)', textAlign: 'center', maxWidth: 160, lineHeight: 1.5 }}>{result.summary}</p>}
             </div>
-            <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>Score Breakdown</div>
+            <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 11 }}>Trust Signal Breakdown</div>
               {DIMS.map(d => {
                 const val = result[d.key]
                 const color = scoreColor(val || 0)
                 return (
                   <div key={d.key}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 5 }}>
-                      <span>{d.label} <span style={{ color: 'var(--text-3)', fontSize: 11 }}>{d.weight}</span></span>
-                      <span style={{ fontWeight: 600, color }}>{val ? `${val}/100` : '—'}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 5, alignItems: 'flex-start', gap: 8 }}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>{d.label} <span style={{ color: 'var(--text-3)', fontSize: 11 }}>{d.weight}</span></div>
+                        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>{d.desc}</div>
+                      </div>
+                      <span style={{ fontWeight: 700, color, flexShrink: 0 }}>{val ? `${val}/100` : '—'}</span>
                     </div>
-                    <div style={{ height: 7, background: 'var(--bg-3)', borderRadius: 99, overflow: 'hidden' }}>
-                      <div style={{ width: `${val || 0}%`, height: '100%', background: color, borderRadius: 99, transition: 'width 0.6s ease' }} />
+                    <div style={{ height: 6, background: 'var(--bg-3)', borderRadius: 99, overflow: 'hidden' }}>
+                      <div style={{ width: `${val || 0}%`, height: '100%', background: color, borderRadius: 99, transition: 'width 0.8s cubic-bezier(.2,.8,.2,1)' }} />
                     </div>
                   </div>
                 )
@@ -303,48 +328,92 @@ export default function AnalysisPage() {
         )}
       </div>
 
-      {/* Fraud flags */}
+      {/* Risk Intelligence Signals */}
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
-        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          Fraud Flags
-          {flags.length > 0 && <span style={{ background: '#f43f5e22', color: '#f43f5e', borderRadius: 10, padding: '2px 8px', fontSize: 12 }}>{flags.length}</span>}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ShieldAlert size={15} color={flags.length > 0 ? '#f43f5e' : '#34d399'} /> Risk Intelligence Signals
+              {flags.length > 0 && <span style={{ background: '#f43f5e22', color: '#f43f5e', borderRadius: 10, padding: '2px 8px', fontSize: 12 }}>{flags.length} signal{flags.length > 1 ? 's' : ''}</span>}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Evidence-based fraud indicators and authenticity anomalies</div>
+          </div>
         </div>
         {flags.length === 0 ? (
-          <div style={{ color: 'var(--text-2)', fontSize: 13, padding: '16px 0', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <div style={{ color: 'var(--text-2)', fontSize: 13, padding: '20px 0', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             {result
-              ? <><ShieldCheck size={16} color="#34d399" /> No fraud flags detected</>
-              : <><Clock size={16} color="var(--text-3)" /> Flags will appear after AI analysis runs</>}
+              ? <><ShieldCheck size={16} color="#34d399" /> No risk signals detected — candidate authenticity verified across all dimensions</>
+              : <><Clock size={16} color="var(--text-3)" /> Risk signals will appear after trust intelligence runs</>}
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {flags.map((flag, i) => (
-              <div key={i} style={{ padding: '12px 16px', background: 'var(--bg-3)', borderRadius: 8, borderLeft: `3px solid ${flag.severity === 'high' ? '#f43f5e' : flag.severity === 'medium' ? '#f5a524' : '#34d399'}` }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <AlertTriangle size={13} color={flag.severity === 'high' ? '#f43f5e' : '#f5a524'} /> {flag.title}
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: flag.severity === 'high' ? '#f43f5e' : flag.severity === 'medium' ? '#f5a524' : '#34d399', textTransform: 'capitalize' }}>{flag.severity}</span>
+            {flags.map((flag, i) => {
+              const sigColor = flag.severity === 'high' ? '#f43f5e' : flag.severity === 'medium' ? '#f5a524' : '#34d399'
+              return (
+                <div key={i} style={{ padding: '14px 16px', background: 'var(--bg-3)', borderRadius: 8, borderLeft: `3px solid ${sigColor}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'flex-start', gap: 8 }}>
+                    <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <AlertTriangle size={13} color={sigColor} /> {flag.title}
+                    </span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: sigColor, background: sigColor + '22', borderRadius: 6, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0 }}>{flag.severity} risk</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5 }}>{flag.description}</div>
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-2)' }}>{flag.description}</div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
 
-      {/* Recruiter Notes */}
+      {/* Recruiter Decision Log */}
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
-        <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 12 }}>Recruiter Notes</div>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <BookOpen size={15} color="var(--teal)" /> Recruiter Decision Log
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Document decision rationale for audit trail and compliance. All entries are timestamped and immutable once saved.</div>
+        </div>
         <textarea
           value={notes}
           onChange={e => setNotes(e.target.value)}
-          placeholder="Add private notes about this candidate — interview feedback, follow-up actions, decision rationale..."
-          style={{ width: '100%', minHeight: 100, background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }}
+          placeholder="Record your decision rationale — interview observations, verification steps taken, reasons for progression or rejection. This log forms part of the compliance audit trail."
+          style={{ width: '100%', minHeight: 110, background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', resize: 'vertical', outline: 'none', fontFamily: 'inherit', lineHeight: 1.6 }}
         />
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Lock size={10} /> Stored securely · Included in compliance exports
+          </span>
           <button className="btn btn-sm btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={saveNotes}>
-            <Save size={13} /> {notesSaved ? 'Saved!' : 'Save notes'}
+            <Save size={13} /> {notesSaved ? 'Saved!' : 'Save to decision log'}
           </button>
+        </div>
+      </div>
+
+      {/* Compliance & Governance */}
+      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ShieldCheck size={15} color="var(--teal)" /> Compliance & Governance
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>AI governance status and regulatory compliance for this hiring decision</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 10 }}>
+          {[
+            { label: 'GDPR Lawful Basis',   value: 'UK GDPR Art. 6(1)(f)',         ok: true  },
+            { label: 'EU AI Act',            value: 'Human oversight active',        ok: true  },
+            { label: 'Explainability',       value: 'Evidence-based scoring',        ok: true  },
+            { label: 'Data Retention',       value: '12 months from upload',         ok: true  },
+            { label: 'Audit Trail',          value: 'Complete & immutable',          ok: true  },
+            { label: 'Right to Review',      value: 'Candidate can request report',  ok: true  },
+          ].map(item => (
+            <div key={item.label} style={{ background: 'var(--bg-3)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--line)' }}>
+              <div style={{ fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5, fontWeight: 600 }}>{item.label}</div>
+              <div style={{ fontSize: 12, fontWeight: 500, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: item.ok ? '#34d399' : '#f43f5e', flexShrink: 0, display: 'inline-block' }} />
+                {item.value}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

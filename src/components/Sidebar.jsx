@@ -39,13 +39,13 @@ export default function Sidebar({ user, onSignOut }) {
   const initials = name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase()
 
   const NAV = [
-    { to: '/',           label: 'Dashboard',  Icon: LayoutDashboard, badge: null,                end: true },
-    { to: '/candidates', label: 'Candidates', Icon: Users,           badge: counts.candidates          },
-    { to: '/upload',     label: 'Upload CV',  Icon: Upload,          badge: null                       },
-    { to: '/analysis',   label: 'Analysis',   Icon: BarChart2,       badge: null                       },
-    { to: '/reports',    label: 'Reports',    Icon: FileText,        badge: null                       },
-    { to: '/activity',   label: 'Activity',   Icon: Activity,        badge: null                       },
-    { to: '/alerts',     label: 'Alerts',     Icon: AlertTriangle,   badge: counts.alerts              },
+    { to: '/',           label: 'Dashboard',          Icon: LayoutDashboard, badge: null,             end: true },
+    { to: '/candidates', label: 'Candidates',          Icon: Users,           badge: counts.candidates          },
+    { to: '/upload',     label: 'Add Candidate',       Icon: Upload,          badge: null                       },
+    { to: '/analysis',   label: 'Trust Intelligence',  Icon: BarChart2,       badge: null                       },
+    { to: '/reports',    label: 'Trust Reports',       Icon: FileText,        badge: null                       },
+    { to: '/activity',   label: 'Audit Log',           Icon: Activity,        badge: null                       },
+    { to: '/alerts',     label: 'Risk Signals',        Icon: AlertTriangle,   badge: counts.alerts              },
   ]
 
   return (

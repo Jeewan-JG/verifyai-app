@@ -78,14 +78,14 @@ export default function AlertsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8 }}>
-            Alerts
+            Risk Signals
             {alerts.filter(a => a.type === 'high').length > 0 && (
               <span style={{ background: '#f43f5e22', color: '#f43f5e', borderRadius: 10, padding: '2px 8px', fontSize: 12, fontWeight: 600 }}>
                 {alerts.filter(a => a.type === 'high').length} high
               </span>
             )}
           </div>
-          <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 2 }}>Fraud flags and risk alerts across all candidates</div>
+          <div style={{ fontSize: 13, color: 'var(--text-2)', marginTop: 2 }}>Risk intelligence signals and trust anomalies across all candidates</div>
         </div>
         <select className="input" style={{ width: 160 }} value={filter} onChange={e => setFilter(e.target.value)}>
           <option value="all">All alerts</option>
@@ -112,16 +112,16 @@ export default function AlertsPage() {
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <AlertTriangle size={15} />
-          <span style={{ fontWeight: 600, fontSize: 14 }}>Active Alerts</span>
+          <span style={{ fontWeight: 600, fontSize: 14 }}>Active Risk Signals</span>
           <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-2)' }}>{filtered.length} alerts</span>
         </div>
 
         {filtered.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-2)' }}>
             <CheckCircle size={32} strokeWidth={1} color="#34d399" style={{ margin: '0 auto 12px', display: 'block' }} />
-            <div style={{ fontWeight: 600, marginBottom: 6 }}>No alerts</div>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>No risk signals</div>
             <div style={{ fontSize: 13 }}>
-              {alerts.length === 0 ? 'No fraud flags detected across all candidates' : 'No alerts match the selected filter'}
+              {alerts.length === 0 ? 'No risk intelligence signals detected across all candidates' : 'No signals match the selected filter'}
             </div>
           </div>
         ) : (

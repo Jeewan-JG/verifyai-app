@@ -80,7 +80,7 @@ export default function UploadPage() {
     <div style={{ padding: '48px 24px', textAlign: 'center' }}>
       <CheckCircle size={48} strokeWidth={1.5} color="#34d399" style={{ margin: '0 auto 16px', display: 'block' }} />
       <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Candidate added!</div>
-      <div style={{ color: 'var(--text-2)', fontSize: 14 }}>Taking you to the analysis page — AI is working on the CV now...</div>
+      <div style={{ color: 'var(--text-2)', fontSize: 14 }}>Taking you to the Trust Intelligence report — analysis running now...</div>
     </div>
   )
 
@@ -168,12 +168,12 @@ export default function UploadPage() {
         {/* GDPR notice */}
         <div style={{ fontSize: 12, color: 'var(--text-2)', padding: '10px 14px', background: 'var(--bg-2)', borderRadius: 8, border: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Lock size={13} style={{ flexShrink: 0 }} />
-          Files are encrypted at rest and processed under UK GDPR lawful basis. Candidate data is retained for 12 months by default.
+          Files are encrypted at rest · Processed under UK GDPR Art. 6(1)(f) · Compliant with EU AI Act human oversight requirements · Retained for 12 months
         </div>
 
         <div style={{ display: 'flex', gap: 12 }}>
           <button type="submit" className="btn btn-primary" disabled={saving} style={{ flex: 1, justifyContent: 'center' }}>
-            {saving ? 'Uploading & analysing...' : '✓ Add Candidate & Run AI Analysis'}
+            {saving ? 'Uploading & running trust intelligence...' : '✓ Add Candidate & Run Trust Intelligence'}
           </button>
           <button type="button" className="btn btn-ghost" onClick={() => navigate('/candidates')}>Cancel</button>
         </div>

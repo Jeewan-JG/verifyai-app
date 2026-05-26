@@ -3,11 +3,11 @@ import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
 const DIMS = [
-  { key: 'timeline_consistency',       label: 'Timeline Consistency',       weight: '25%' },
-  { key: 'skill_authenticity',         label: 'Skill Authenticity',         weight: '25%' },
-  { key: 'ai_text_detection',          label: 'AI Text Detection',          weight: '20%' },
-  { key: 'certification_plausibility', label: 'Certification Plausibility', weight: '15%' },
-  { key: 'narrative_coherence',        label: 'Narrative Coherence',        weight: '15%' },
+  { key: 'timeline_consistency',       label: 'Identity & Employment Consistency', weight: '25%' },
+  { key: 'skill_authenticity',         label: 'Credential Authenticity',           weight: '25%' },
+  { key: 'ai_text_detection',          label: 'AI-Generated Content Detection',    weight: '20%' },
+  { key: 'certification_plausibility', label: 'Qualification Verification',        weight: '15%' },
+  { key: 'narrative_coherence',        label: 'Behavioural Consistency',           weight: '15%' },
 ]
 
 const scoreColor = (s) => s >= 70 ? '#16a34a' : s >= 40 ? '#d97706' : '#dc2626'
@@ -72,10 +72,10 @@ export default function ReportPrintPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, paddingBottom: 20, borderBottom: '2px solid #0d9488' }}>
           <div>
             <div style={{ fontSize: 24, fontWeight: 800, color: '#0d9488', letterSpacing: '-0.02em' }}>Verify.AI</div>
-            <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>AI-Powered CV Trust Intelligence</div>
+            <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>Trust Infrastructure for Modern Hiring</div>
           </div>
           <div style={{ textAlign: 'right', fontSize: 12, color: '#64748b' }}>
-            <div style={{ fontWeight: 600, fontSize: 14, color: '#111', marginBottom: 2 }}>Candidate Trust Report</div>
+            <div style={{ fontWeight: 600, fontSize: 14, color: '#111', marginBottom: 2 }}>Trust Intelligence Report</div>
             <div>Generated: {date}</div>
             <div>Report ID: {candidateId?.slice(0, 8).toUpperCase()}</div>
           </div>
@@ -113,7 +113,7 @@ export default function ReportPrintPage() {
         {/* Score breakdown */}
         {result && (
           <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid #e2e8f0' }}>Score Breakdown</div>
+            <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid #e2e8f0' }}>Trust Signal Breakdown</div>
             {DIMS.map(d => {
               const val = result[d.key] || 0
               const color = scoreColor(val)
@@ -135,10 +135,10 @@ export default function ReportPrintPage() {
         {/* Fraud flags */}
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, paddingBottom: 8, borderBottom: '1px solid #e2e8f0' }}>
-            Fraud Flags {flags.length === 0 ? '— None Detected' : `(${flags.length})`}
+            Risk Intelligence Signals {flags.length === 0 ? '— None Detected' : `(${flags.length})`}
           </div>
           {flags.length === 0 ? (
-            <div style={{ fontSize: 13, color: '#16a34a', padding: '10px 0' }}>No fraud flags detected. CV appears authentic.</div>
+            <div style={{ fontSize: 13, color: '#16a34a', padding: '10px 0' }}>No risk signals detected. Candidate authenticity verified across all trust dimensions.</div>
           ) : (
             flags.map((flag, i) => (
               <div key={i} style={{ padding: '12px 14px', background: '#fafafa', borderLeft: `3px solid ${riskColor(flag.severity)}`, borderRadius: 6, marginBottom: 10 }}>
@@ -151,8 +151,8 @@ export default function ReportPrintPage() {
 
         {/* Footer */}
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: 16, display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#94a3b8' }}>
-          <span>Verify.AI — AI-Powered CV Trust Intelligence Platform</span>
-          <span>This report is confidential and intended for authorised HR personnel only.</span>
+          <span>Verify.AI — Trust Infrastructure for Modern Hiring · getverifyai.com</span>
+          <span>Confidential — authorised HR personnel only · Processed under UK GDPR Art. 6(1)(f)</span>
         </div>
 
       </div>
