@@ -248,7 +248,7 @@ export default function LoginPage() {
               </g>
             </svg>
           </div>
-          <div className="login-headline" style={{ marginTop: 16 }}>
+          <div className="login-headline" style={{ marginTop: -30 }}>
             Trust Intelligence<br />
             <span>for Modern Hiring</span>
           </div>
