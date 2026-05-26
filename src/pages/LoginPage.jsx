@@ -228,15 +228,17 @@ export default function LoginPage() {
       <div className="login-left" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <div>
           <div className="login-mark">
-            <svg width="400" height="117" viewBox="100 40 870 255" xmlns="http://www.w3.org/2000/svg">
-              {/* Animated checkmark */}
+            {/* Checkmark icon only — tight viewBox so it doesn't push height */}
+            <svg width="48" height="56" viewBox="114 102 172 192" xmlns="http://www.w3.org/2000/svg">
               <g transform="translate(124 112)">
                 <path d="M0 18 66 172 152 0" fill="none" stroke="#14b8a6" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="420" strokeDashoffset="420">
                   <animate attributeName="stroke-dashoffset" values="420;0;0;420" keyTimes="0;.36;.78;1" dur="3s" repeatCount="indefinite"/>
                 </path>
                 <path d="M34 112 68 146 123 76" fill="none" stroke="#e6edf2" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
               </g>
-              {/* Verify.AI text with animated underline */}
+            </svg>
+            {/* Verify.AI text + animated underline only */}
+            <svg width="220" height="56" viewBox="325 38 632 168" xmlns="http://www.w3.org/2000/svg">
               <g transform="translate(330 154)">
                 <text x="0" y="0" fill="#e6edf2" fontFamily="Inter, Arial, sans-serif" fontSize="110" fontWeight="780" letterSpacing="-7">
                   Verify<tspan fill="#14b8a6">.AI</tspan><tspan dx="9" dy="-58" fill="#7d8f9b" fontSize="26" letterSpacing="0">TM</tspan>
@@ -248,7 +250,7 @@ export default function LoginPage() {
               </g>
             </svg>
           </div>
-          <div className="login-headline" style={{ marginTop: -30 }}>
+          <div className="login-headline" style={{ marginTop: 14 }}>
             Trust Intelligence<br />
             <span>for Modern Hiring</span>
           </div>
