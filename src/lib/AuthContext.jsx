@@ -8,8 +8,12 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Safety timeout — if Supabase doesn't respond in 8s, stop loading anyway
+    const timeout = setTimeout(() => setLoading(false), 8000)
+
     // Get existing session on load
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeout)
       setUser(session?.user ?? null)
       setLoading(false)
     })
