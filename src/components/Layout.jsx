@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import TrialBanner from './TrialBanner'
 
 const PAGE_META = {
   '/':          ['Dashboard',         'Overview of trust intelligence across your hiring pipeline'],
@@ -34,6 +35,7 @@ export default function Layout() {
       <div className="mobile-scrim" onClick={() => setMobileNav(false)} />
       <Sidebar user={user} onSignOut={handleSignOut} />
       <main className="main">
+        <TrialBanner />
         <Topbar
           title={title}
           subtitle={subtitle}

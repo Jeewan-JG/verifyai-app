@@ -40,13 +40,43 @@ export const AuthProvider = ({ children }) => {
     return data
   }
 
+  const signUp = async (email, password, companyName) => {
+    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          company_name: companyName,
+          trial_ends_at: trialEndsAt,
+          plan: 'trial',
+        }
+      }
+    })
+    if (error) throw error
+    return data
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
   }
 
+  // Trial helpers — null means owner/admin account (no trial set)
+  const trialEndsAt = user?.user_metadata?.trial_ends_at ?? null
+  const trialDaysLeft = trialEndsAt
+    ? Math.max(0, Math.ceil((new Date(trialEndsAt) - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null
+  const isTrialExpired = trialEndsAt ? new Date(trialEndsAt) < new Date() : false
+  const isPaidUser = user?.user_metadata?.plan === 'paid'
+  const isOnTrial = !!trialEndsAt && !isTrialExpired && !isPaidUser
+
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signInWithEmail, signOut }}>
+    <AuthContext.Provider value={{
+      user, loading,
+      signInWithGoogle, signInWithEmail, signUp, signOut,
+      trialDaysLeft, isTrialExpired, isOnTrial, isPaidUser,
+    }}>
       {children}
     </AuthContext.Provider>
   )

@@ -202,21 +202,42 @@ function StepCards() {
 }
 
 export default function LoginPage() {
-  const { signInWithGoogle, signInWithEmail } = useAuth()
-  const [email, setEmail]       = useState('sarah.clayton@acmetalent.co.uk')
-  const [password, setPassword] = useState('password123')
-  const [showPw, setShowPw]     = useState(false)
-  const [error, setError]       = useState(null)
-  const [loading, setLoading]   = useState(false)
+  const { signInWithGoogle, signInWithEmail, signUp } = useAuth()
+  const [mode, setMode]           = useState('login') // 'login' | 'signup'
+  const [email, setEmail]         = useState('')
+  const [password, setPassword]   = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [company, setCompany]     = useState('')
+  const [showPw, setShowPw]       = useState(false)
+  const [error, setError]         = useState(null)
+  const [loading, setLoading]     = useState(false)
+  const [signupDone, setSignupDone] = useState(false)
 
-  const handleEmailLogin = async (e) => {
+  const switchMode = (m) => {
+    setMode(m)
+    setEmail('')
+    setPassword('')
+    setConfirmPw('')
+    setCompany('')
+    setError(null)
+  }
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
     try {
-      await signInWithEmail(email, password)
+      if (mode === 'login') {
+        await signInWithEmail(email, password)
+      } else {
+        if (password !== confirmPw) throw new Error('Passwords do not match.')
+        if (password.length < 8) throw new Error('Password must be at least 8 characters.')
+        const data = await signUp(email, password, company)
+        // If email confirmation is required, session will be null
+        if (!data.session) setSignupDone(true)
+      }
     } catch (err) {
-      setError(err.message || 'Sign-in failed. Check your credentials.')
+      setError(err.message || 'Something went wrong. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -276,108 +297,151 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right panel — login form (unchanged) */}
+      {/* Right panel */}
       <div className="login-right">
         <div className="login-card">
-          <h1 className="login-title">Welcome back</h1>
-          <p className="login-sub">Sign in to your Verify.AI account</p>
 
-          <form onSubmit={handleEmailLogin}>
-            <div className="field">
-              <label>Work email</label>
-              <input
-                className="input"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
+          {/* Mode toggle tabs */}
+          <div style={{ display: 'flex', background: '#0f172a', borderRadius: 10, padding: 4, marginBottom: 24, border: '1px solid #1e293b' }}>
+            {['login', 'signup'].map(m => (
+              <button key={m} type="button" onClick={() => switchMode(m)}
+                style={{
+                  flex: 1, padding: '8px 0', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                  background: mode === m ? '#1e293b' : 'transparent',
+                  color: mode === m ? '#f1f5f9' : '#64748b',
+                  transition: 'all 0.15s',
+                }}>
+                {m === 'login' ? 'Sign in' : 'Start free trial'}
+              </button>
+            ))}
+          </div>
+
+          {signupDone ? (
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              <div style={{ fontSize: 40, marginBottom: 12 }}>✉️</div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>Check your email</h2>
+              <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
+                We sent a confirmation link to <strong style={{ color: '#f1f5f9' }}>{email}</strong>.<br />
+                Click it to activate your 7-day free trial.
+              </p>
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: 20, justifyContent: 'center' }}
+                onClick={() => { setSignupDone(false); switchMode('login') }}>
+                Back to sign in
+              </button>
             </div>
+          ) : (
+            <>
+              <h1 className="login-title" style={{ marginBottom: 4 }}>
+                {mode === 'login' ? 'Welcome back' : 'Create your account'}
+              </h1>
+              <p className="login-sub" style={{ marginBottom: 20 }}>
+                {mode === 'login'
+                  ? 'Sign in to your Verify.AI account'
+                  : '7-day free trial · No credit card required'}
+              </p>
 
-            <div className="field">
-              <label>
-                Password
-                <a href="#">Forgot password?</a>
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  className="input"
-                  type={showPw ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPw(v => !v)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 14 }}
-                >
-                  {showPw ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  )}
+              <form onSubmit={handleSubmit}>
+                {mode === 'signup' && (
+                  <div className="field">
+                    <label>Company / Agency name</label>
+                    <input className="input" type="text" value={company}
+                      onChange={e => setCompany(e.target.value)} required placeholder="Acme Talent Ltd" />
+                  </div>
+                )}
+
+                <div className="field">
+                  <label>Work email</label>
+                  <input className="input" type="email" value={email}
+                    onChange={e => setEmail(e.target.value)} required autoComplete="email"
+                    placeholder="you@company.com" />
+                </div>
+
+                <div className="field">
+                  <label>
+                    Password
+                    {mode === 'login' && <a href="#">Forgot password?</a>}
+                    {mode === 'signup' && <span style={{ color: '#64748b', fontWeight: 400 }}>min. 8 characters</span>}
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input className="input" type={showPw ? 'text' : 'password'} value={password}
+                      onChange={e => setPassword(e.target.value)} required
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'} />
+                    <button type="button" onClick={() => setShowPw(v => !v)}
+                      style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                        background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                      {showPw
+                        ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                        : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      }
+                    </button>
+                  </div>
+                </div>
+
+                {mode === 'signup' && (
+                  <div className="field">
+                    <label>Confirm password</label>
+                    <input className="input" type={showPw ? 'text' : 'password'} value={confirmPw}
+                      onChange={e => setConfirmPw(e.target.value)} required autoComplete="new-password" />
+                  </div>
+                )}
+
+                {mode === 'login' && (
+                  <div className="checkbox" style={{ marginTop: 12 }}>
+                    <input type="checkbox" defaultChecked id="remember" />
+                    <label htmlFor="remember">Remember me</label>
+                  </div>
+                )}
+
+                {error && (
+                  <div style={{ color: 'var(--red)', fontSize: 13, marginTop: 10, padding: '8px 12px',
+                    background: 'rgba(244,63,94,0.1)', borderRadius: 8 }}>
+                    {error}
+                  </div>
+                )}
+
+                <button className="btn btn-primary"
+                  style={{ width: '100%', marginTop: 18, justifyContent: 'center' }}
+                  type="submit" disabled={loading}>
+                  {loading
+                    ? (mode === 'login' ? 'Signing in...' : 'Creating account...')
+                    : (mode === 'login' ? 'Sign in →' : 'Start free trial →')}
                 </button>
-              </div>
-            </div>
+              </form>
 
-            <div className="checkbox" style={{ marginTop: 12 }}>
-              <input type="checkbox" defaultChecked id="remember" />
-              <label htmlFor="remember">Remember me</label>
-            </div>
+              {mode === 'login' && (
+                <>
+                  <div className="divider-or">or continue with</div>
+                  <button className="sso-btn" style={{ background: '#fff', color: '#333', border: '1px solid #e2e8f0', marginTop: 0 }}
+                    onClick={signInWithGoogle}>
+                    <svg width="16" height="16" viewBox="0 0 48 48">
+                      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.7 0 6.7 5.5 2.9 13.5l7.8 6C12.5 13.1 17.9 9.5 24 9.5z"/>
+                      <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/>
+                      <path fill="#FBBC05" d="M10.7 28.5c-.5-1.5-.8-3-.8-4.5s.3-3 .8-4.5l-7.8-6C1 16.4 0 20.1 0 24s1 7.6 2.9 10.5l7.8-6z"/>
+                      <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.3-7.7 2.3-6.1 0-11.3-4.1-13.2-9.5l-7.8 6C6.7 42.5 14.7 48 24 48z"/>
+                    </svg>
+                    Sign in with Google
+                  </button>
+                  <button className="sso-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#4285F4"><rect x="1" y="1" width="10" height="10"/><rect x="13" y="1" width="10" height="10"/><rect x="1" y="13" width="10" height="10"/><rect x="13" y="13" width="10" height="10"/></svg>
+                    Sign in with Microsoft
+                  </button>
+                  <button className="sso-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </svg>
+                    Sign in with SSO
+                  </button>
+                </>
+              )}
 
-            {error && (
-              <div style={{ color: 'var(--red)', fontSize: 13, marginTop: 10, padding: '8px 12px', background: 'rgba(244,63,94,0.1)', borderRadius: 8 }}>
-                {error}
-              </div>
-            )}
-
-            <button
-              className="btn btn-primary"
-              style={{ width: '100%', marginTop: 18, justifyContent: 'center' }}
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign in →'}
-            </button>
-          </form>
-
-          <div className="divider-or">or continue with</div>
-
-          <button className="sso-btn" style={{ background: '#fff', color: '#333', border: '1px solid #e2e8f0', marginTop: 0 }} onClick={signInWithGoogle}>
-            <svg width="16" height="16" viewBox="0 0 48 48">
-              <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.7 0 6.7 5.5 2.9 13.5l7.8 6C12.5 13.1 17.9 9.5 24 9.5z"/>
-              <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z"/>
-              <path fill="#FBBC05" d="M10.7 28.5c-.5-1.5-.8-3-.8-4.5s.3-3 .8-4.5l-7.8-6C1 16.4 0 20.1 0 24s1 7.6 2.9 10.5l7.8-6z"/>
-              <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7.5-5.8c-2 1.4-4.6 2.3-7.7 2.3-6.1 0-11.3-4.1-13.2-9.5l-7.8 6C6.7 42.5 14.7 48 24 48z"/>
-            </svg>
-            Sign in with Google
-          </button>
-          <button className="sso-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="#4285F4"><rect x="1" y="1" width="10" height="10"/><rect x="13" y="1" width="10" height="10"/><rect x="1" y="13" width="10" height="10"/><rect x="13" y="13" width="10" height="10"/></svg>
-            Sign in with Microsoft
-          </button>
-          <button className="sso-btn" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            Sign in with SSO
-          </button>
-
-          <p className="legal">
-            By signing in, you agree to our{' '}
-            <a href="#">Terms of Service</a> and{' '}
-            <a href="#">Privacy Policy</a>.
-            UK Data hosted in London.
-          </p>
+              <p className="legal" style={{ marginTop: 16 }}>
+                By {mode === 'login' ? 'signing in' : 'creating an account'}, you agree to our{' '}
+                <a href="#">Terms of Service</a> and{' '}
+                <a href="#">Privacy Policy</a>.
+                UK Data hosted in London.
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

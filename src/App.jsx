@@ -13,12 +13,15 @@ import SettingsPage from './pages/SettingsPage'
 import ReportPrintPage from './pages/ReportPrintPage'
 import ComplianceCenterPage from './pages/ComplianceCenterPage'
 import PlatformPage from './pages/PlatformPage'
+import PricingPage from './pages/PricingPage'
 
-// Protect routes — redirect to login if not signed in
+// Protect routes — redirect to login if not signed in; redirect to pricing if trial expired
 const PrivateRoute = ({ children }) => {
-  const { user, loading } = useAuth()
+  const { user, loading, isTrialExpired, isPaidUser } = useAuth()
   if (loading) return <div className="app-loading">Loading...</div>
-  return user ? children : <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" replace />
+  if (isTrialExpired && !isPaidUser) return <Navigate to="/pricing" replace />
+  return children
 }
 
 export default function App() {
@@ -28,6 +31,7 @@ export default function App() {
     <Routes>
       {/* Public */}
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <LoginPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
 
       {/* Protected — all inside the Layout (sidebar + topbar) */}
       <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
