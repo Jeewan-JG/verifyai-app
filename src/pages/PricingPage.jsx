@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/AuthContext'
+import { useEffect } from 'react'
 
 const PLANS = [
   {
@@ -57,8 +58,46 @@ const PLANS = [
 
 export default function PricingPage({ trialExpired = false }) {
   const [annual, setAnnual] = useState(false)
+  const [loadingPlan, setLoadingPlan] = useState(null)
+  const [notice, setNotice] = useState(null)
   const navigate = useNavigate()
-  const { trialDaysLeft, isOnTrial } = useAuth()
+  const { trialDaysLeft, isOnTrial, user } = useAuth()
+
+  // Handle Stripe redirect back
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('success') === 'true') setNotice('success')
+    if (params.get('cancelled') === 'true') setNotice('cancelled')
+  }, [])
+
+  const handleSelectPlan = async (plan) => {
+    if (plan.name === 'Enterprise') {
+      window.location.href = 'mailto:jeewang936@gmail.com?subject=Verify.AI Enterprise enquiry'
+      return
+    }
+    if (!user) { navigate('/login'); return }
+
+    setLoadingPlan(plan.name)
+    try {
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan: plan.name.toLowerCase(),
+          annual,
+          userId: user.id,
+          email: user.email,
+        }),
+      })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+      else throw new Error(data.error || 'Failed to create checkout session')
+    } catch (err) {
+      alert('Payment setup failed: ' + err.message)
+    } finally {
+      setLoadingPlan(null)
+    }
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#0b1220', padding: '48px 24px', fontFamily: 'Inter, sans-serif' }}>
@@ -69,6 +108,20 @@ export default function PricingPage({ trialExpired = false }) {
             border: '1px solid rgba(244,63,94,0.3)', borderRadius: 8, padding: '8px 16px',
             fontSize: 13, fontWeight: 600, marginBottom: 20 }}>
             Your 7-day free trial has ended — choose a plan to continue
+          </div>
+        )}
+        {notice === 'success' && (
+          <div style={{ display: 'inline-block', background: 'rgba(20,184,166,0.1)', color: '#14b8a6',
+            border: '1px solid rgba(20,184,166,0.3)', borderRadius: 8, padding: '10px 20px',
+            fontSize: 14, fontWeight: 600, marginBottom: 20 }}>
+            Payment successful — your account has been upgraded!
+          </div>
+        )}
+        {notice === 'cancelled' && (
+          <div style={{ display: 'inline-block', background: 'rgba(100,116,139,0.1)', color: '#94a3b8',
+            border: '1px solid #334155', borderRadius: 8, padding: '10px 20px',
+            fontSize: 14, marginBottom: 20 }}>
+            Payment cancelled — you can upgrade any time.
           </div>
         )}
         {isOnTrial && !trialExpired && (
@@ -156,18 +209,20 @@ export default function PricingPage({ trialExpired = false }) {
             </ul>
 
             <button
-              onClick={() => plan.name === 'Enterprise' ? null : alert('Stripe payments coming soon — contact jeewang936@gmail.com to upgrade.')}
+              onClick={() => handleSelectPlan(plan)}
+              disabled={loadingPlan === plan.name}
               style={{
-                width: '100%', padding: '12px 0', borderRadius: 10, border: 'none', cursor: 'pointer',
+                width: '100%', padding: '12px 0', borderRadius: 10, cursor: 'pointer',
                 fontSize: 14, fontWeight: 700, transition: 'opacity 0.15s',
                 background: plan.highlight ? '#14b8a6' : '#1e293b',
                 color: plan.highlight ? '#0b1220' : '#f1f5f9',
                 border: plan.highlight ? 'none' : '1px solid #334155',
+                opacity: loadingPlan === plan.name ? 0.6 : 1,
               }}
               onMouseOver={e => e.currentTarget.style.opacity = '0.85'}
-              onMouseOut={e => e.currentTarget.style.opacity = '1'}
+              onMouseOut={e => e.currentTarget.style.opacity = loadingPlan === plan.name ? '0.6' : '1'}
             >
-              {plan.cta}
+              {loadingPlan === plan.name ? 'Redirecting to payment...' : plan.cta}
             </button>
           </div>
         ))}
