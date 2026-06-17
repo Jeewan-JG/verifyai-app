@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Login Left Panel — 5 Options</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0a0f1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #fff; padding: 32px; }
+  h2 { color: #94a3b8; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 300px); gap: 20px; }
+  .panel {
+    background: #0f172a;
+    border-radius: 16px;
+    padding: 36px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 520px;
+    border: 1px solid #1e293b;
+    position: relative;
+    overflow: hidden;
+  }
+  .brand { font-size: 18px; font-weight: 700; margin-bottom: 40px; }
+  .brand span { color: #14b8a6; }
+  .headline { font-size: 26px; font-weight: 800; line-height: 1.2; letter-spacing: -0.03em; margin-bottom: 14px; }
+  .headline em { color: #14b8a6; font-style: normal; }
+  .tagline { font-size: 13px; color: #64748b; line-height: 1.6; margin-bottom: 28px; }
+  .foot { font-size: 11px; color: #334155; display: flex; align-items: center; gap: 6px; margin-top: auto; }
+
+  /* Option 1 — Stat metrics */
+  .stats { display: flex; flex-direction: column; gap: 10px; }
+  .stat-card { background: #1e293b; border-radius: 10px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; }
+  .stat-num { font-size: 28px; font-weight: 800; color: #14b8a6; line-height: 1; }
+  .stat-label { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  /* Option 2 — Icon feature cards */
+  .feat-cards { display: flex; flex-direction: column; gap: 10px; }
+  .feat-card { background: #1e293b; border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 12px; }
+  .feat-icon { width: 34px; height: 34px; border-radius: 8px; background: rgba(20,184,166,0.15); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .feat-icon svg { width: 16px; height: 16px; stroke: #14b8a6; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .feat-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .feat-desc { font-size: 11px; color: #64748b; line-height: 1.4; }
+
+  /* Option 3 — 3-step process */
+  .steps { display: flex; flex-direction: column; gap: 0; position: relative; }
+  .step { display: flex; gap: 14px; align-items: flex-start; padding-bottom: 20px; position: relative; }
+  .step:last-child { padding-bottom: 0; }
+  .step-line { position: absolute; left: 15px; top: 32px; bottom: 0; width: 2px; background: #1e293b; }
+  .step:last-child .step-line { display: none; }
+  .step-num { width: 30px; height: 30px; border-radius: 50%; background: rgba(20,184,166,0.15); border: 1.5px solid #14b8a6; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #14b8a6; flex-shrink: 0; }
+  .step-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; margin-top: 5px; }
+  .step-desc { font-size: 11px; color: #64748b; line-height: 1.4; }
+
+  /* Option 4 — Testimonial */
+  .quote-block { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 20px; border-left: 3px solid #14b8a6; }
+  .quote-text { font-size: 13px; color: #cbd5e1; line-height: 1.6; font-style: italic; margin-bottom: 10px; }
+  .quote-author { display: flex; align-items: center; gap: 8px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: #14b8a6; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #000; }
+  .author-name { font-size: 12px; font-weight: 600; }
+  .author-role { font-size: 11px; color: #475569; }
+  .feat-list { display: flex; flex-direction: column; gap: 8px; }
+  .feat-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #94a3b8; }
+  .feat-dot { width: 6px; height: 6px; border-radius: 50%; background: #14b8a6; flex-shrink: 0; }
+
+  /* Option 5 — Score preview card */
+  .preview-card { background: #1e293b; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+  .preview-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .candidate-avatar { width: 36px; height: 36px; border-radius: 50%; background: #14b8a6; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #000; }
+  .candidate-name { font-size: 13px; font-weight: 600; }
+  .candidate-role { font-size: 11px; color: #64748b; }
+  .score-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .big-score { font-size: 36px; font-weight: 800; color: #34d399; line-height: 1; }
+  .big-score span { font-size: 14px; color: #475569; font-weight: 400; }
+  .risk-badge { background: rgba(52,211,153,0.15); color: #34d399; border-radius: 6px; padding: '2px 8px'; font-size: 11px; font-weight: 700; padding: 3px 8px; }
+  .dim-bar { margin-bottom: 8px; }
+  .dim-label { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: 3px; }
+  .bar-bg { height: 5px; background: #0f172a; border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; }
+
+  /* Glow effect for option 5 */
+  .panel-5::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(20,184,166,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Label badge */
+  .opt-label {
+    position: absolute; top: 12px; right: 12px;
+    background: #1e293b; color: #64748b;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+</style>
+</head>
+<body>
+<div style="margin-bottom:24px">
+  <div style="font-size:20px;font-weight:700;color:#f1f5f9;margin-bottom:4px">Login Page — Left Panel Designs</div>
+  <div style="font-size:13px;color:#475569">5 options for the left branding panel. Right panel (login form) stays the same.</div>
+</div>
+
+<div class="grid">
+
+  <!-- OPTION 1: Stat Metrics -->
+  <div class="panel">
+    <span class="opt-label">Option 1</span>
+    <div>
+      <div class="brand">Verify<span>.AI</span>™</div>
+      <div class="headline">Trust Intelligence<br/><em>for Modern Hiring</em></div>
+      <p class="tagline">Stop wasting interviews on fake CVs. Verify.AI detects fraud before it reaches your shortlist.</p>
+      <div class="stats">
+        <div class="stat-card">
+          <div><div class="stat-num">500+</div></div>
+          <div><div class="feat-title">CVs Analysed</div><div class="stat-label">Across UK recruitment teams</div></div>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-num">&lt;5s</div></div>
+          <div><div class="feat-title">Trust Score Speed</div><div class="stat-label">AI scoring in seconds</div></div>
+        </div>
+        <div class="stat-card">
+          <div><div class="stat-num">98%</div></div>
+          <div><div class="feat-title">Detection Accuracy</div><div class="stat-label">Verified against known fraud</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Enterprise-grade security · UK Data hosted in London · ISO 27001</div>
+  </div>
+
+  <!-- OPTION 2: Icon Feature Cards -->
+  <div class="panel">
+    <span class="opt-label">Option 2</span>
+    <div>
+      <div class="brand">Verify<span>.AI</span>™</div>
+      <div class="headline">Trust Intelligence<br/><em>for Modern Hiring</em></div>
+      <p class="tagline">Stop wasting interviews on fake CVs. Verify.AI detects fraud before it reaches your shortlist.</p>
+      <div class="feat-cards">
+        <div class="feat-card">
+          <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div><div class="feat-title">Fraud Detection</div><div class="feat-desc">Detect fake CVs before interviews are scheduled</div></div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon"><svg viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+          <div><div class="feat-title">Instant AI Scoring</div><div class="feat-desc">Trust Score generated in under 5 seconds</div></div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+          <div><div class="feat-title">GDPR Compliant</div><div class="feat-desc">UK data hosted in London, fully compliant</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Enterprise-grade security · UK Data hosted in London · ISO 27001</div>
+  </div>
+
+  <!-- OPTION 3: 3-Step Process -->
+  <div class="panel">
+    <span class="opt-label">Option 3</span>
+    <div>
+      <div class="brand">Verify<span>.AI</span>™</div>
+      <div class="headline">Trust Intelligence<br/><em>for Modern Hiring</em></div>
+      <p class="tagline">Three steps from CV to confident hiring decision.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-line"></div>
+          <div class="step-num">1</div>
+          <div><div class="step-title">Upload the CV</div><div class="step-desc">PDF, Word or plain text — any format accepted instantly</div></div>
+        </div>
+        <div class="step">
+          <div class="step-line"></div>
+          <div class="step-num">2</div>
+          <div><div class="step-title">AI Analyses It</div><div class="step-desc">GPT-4o checks timeline, skills, certifications and narrative</div></div>
+        </div>
+        <div class="step">
+          <div class="step-line"></div>
+          <div class="step-num">3</div>
+          <div><div class="step-title">Get the Trust Score</div><div class="step-desc">0–100 score with risk level, flags and a full PDF report</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Enterprise-grade security · UK Data hosted in London · ISO 27001</div>
+  </div>
+
+  <!-- OPTION 4: Testimonial + Features -->
+  <div class="panel">
+    <span class="opt-label">Option 4</span>
+    <div>
+      <div class="brand">Verify<span>.AI</span>™</div>
+      <div class="headline">Trust Intelligence<br/><em>for Modern Hiring</em></div>
+      <div class="quote-block">
+        <div class="quote-text">"Verify.AI caught 3 fraudulent CVs in our first week. It paid for itself immediately."</div>
+        <div class="quote-author">
+          <div class="avatar">SC</div>
+          <div><div class="author-name">Sarah Clayton</div><div class="author-role">Head of Talent · Acme Talent</div></div>
+        </div>
+      </div>
+      <div class="feat-list">
+        <div class="feat-row"><div class="feat-dot"></div>Detect fraudulent CVs before interviews are scheduled</div>
+        <div class="feat-row"><div class="feat-dot"></div>AI Trust Score generated in under 5 seconds</div>
+        <div class="feat-row"><div class="feat-dot"></div>GDPR-compliant — UK data hosted in London</div>
+      </div>
+    </div>
+    <div class="foot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Enterprise-grade security · UK Data hosted in London · ISO 27001</div>
+  </div>
+
+  <!-- OPTION 5: Score Preview Card -->
+  <div class="panel panel-5">
+    <span class="opt-label">Option 5</span>
+    <div>
+      <div class="brand">Verify<span>.AI</span>™</div>
+      <div class="headline">Trust Intelligence<br/><em>for Modern Hiring</em></div>
+      <p class="tagline">See exactly what you get — a full Trust Score in seconds.</p>
+      <div class="preview-card">
+        <div class="preview-header">
+          <div class="candidate-avatar">JG</div>
+          <div><div class="candidate-name">James Greenfield</div><div class="candidate-role">Senior Data Analyst</div></div>
+        </div>
+        <div class="score-row">
+          <div><div class="big-score">78<span>/100</span></div><div style="font-size:11px;color:#64748b;margin-top:3px">AI Trust Score</div></div>
+          <div class="risk-badge">Low Risk</div>
+        </div>
+        <div class="dim-bar"><div class="dim-label"><span>Timeline</span><span style="color:#34d399">85</span></div><div class="bar-bg"><div class="bar-fill" style="width:85%;background:#34d399"></div></div></div>
+        <div class="dim-bar"><div class="dim-label"><span>Skills</span><span style="color:#34d399">79</span></div><div class="bar-bg"><div class="bar-fill" style="width:79%;background:#34d399"></div></div></div>
+        <div class="dim-bar"><div class="dim-label"><span>AI Text</span><span style="color:#f5a524">62</span></div><div class="bar-bg"><div class="bar-fill" style="width:62%;background:#f5a524"></div></div></div>
+      </div>
+    </div>
+    <div class="foot"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Enterprise-grade security · UK Data hosted in London · ISO 27001</div>
+  </div>
+
+</div>
+</body>
+</html>

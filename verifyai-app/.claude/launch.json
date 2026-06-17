@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "verifyai-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173
+    },
+    {
+      "name": "login-designs",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-p", "5199", "."],
+      "port": 5199
+    }
+  ]
+}

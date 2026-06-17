@@ -1,0 +1,13 @@
+fastapi==0.136.1
+uvicorn==0.46.0
+supabase==2.30.0
+openai==2.36.0
+python-dotenv==1.2.2
+python-multipart==0.0.28
+python-docx==1.2.0
+PyPDF2==3.0.1
+httpx==0.28.1
+beautifulsoup4==4.12.3
+pydantic==2.13.4
+anyio==4.13.0
+starlette==1.0.0

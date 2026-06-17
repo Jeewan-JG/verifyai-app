@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+verifyai-api/venv/
+verifyai-api/__pycache__/
+verifyai-api/**/__pycache__/
+verifyai-api/**/*.pyc
+
+# Build output
+verifyai-app/dist/
+verifyai-app/.vite/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+verifyai-api/.env
+verifyai-app/.env
+verifyai-app/.env.local
+
+# Misc
+.DS_Store
+*.zip
+Screenshot*.png
