@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../lib/AuthContext'
+import { supabase } from '../lib/supabase'
 
 // Animated network graph
 function NetworkGraph() {
@@ -235,9 +236,13 @@ export default function LoginPage() {
       } else {
         if (password !== confirmPw) throw new Error('Passwords do not match.')
         if (password.length < 8) throw new Error('Password must be at least 8 characters.')
-        const data = await signUp(email, password, company)
-        // If email confirmation is required, session will be null
-        if (!data.session) setSignupDone(true)
+        // Send OTP code to email first
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: true }
+        })
+        if (error) throw error
+        setSignupDone(true)
       }
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
@@ -348,10 +353,14 @@ export default function LoginPage() {
                   setOtpLoading(true)
                   setOtpError(null)
                   try {
-                    const { createClient } = await import('@supabase/supabase-js')
-                    const { supabase } = await import('../lib/supabase')
-                    const { error } = await supabase.auth.verifyOtp({ email, token: otpCode, type: 'signup' })
+                    const { error } = await supabase.auth.verifyOtp({ email, token: otpCode, type: 'email' })
                     if (error) throw error
+                    // Update password and company name after verification
+                    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
+                    await supabase.auth.updateUser({
+                      password,
+                      data: { company_name: company, trial_ends_at: trialEndsAt }
+                    })
                   } catch (err) {
                     setOtpError(err.message || 'Invalid code. Please try again.')
                     setOtpLoading(false)

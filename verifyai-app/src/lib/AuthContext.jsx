@@ -49,7 +49,8 @@ export const AuthProvider = ({ children }) => {
         data: {
           company_name: companyName,
           trial_ends_at: trialEndsAt,
-        }
+        },
+        emailRedirectTo: undefined,
       }
     })
     if (error) throw error
