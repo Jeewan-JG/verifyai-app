@@ -212,6 +212,9 @@ export default function LoginPage() {
   const [error, setError]         = useState(null)
   const [loading, setLoading]     = useState(false)
   const [signupDone, setSignupDone] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
+  const [otpError, setOtpError] = useState(null)
+  const [otpLoading, setOtpLoading] = useState(false)
 
   const switchMode = (m) => {
     setMode(m)
@@ -320,11 +323,44 @@ export default function LoginPage() {
             <div style={{ textAlign: 'center', padding: '24px 0' }}>
               <div style={{ fontSize: 40, marginBottom: 12 }}>✉️</div>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', marginBottom: 8 }}>Check your email</h2>
-              <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
-                We sent a confirmation link to <strong style={{ color: '#f1f5f9' }}>{email}</strong>.<br />
-                Click it to activate your 7-day free trial.
+              <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6, marginBottom: 24 }}>
+                We sent a 6-digit code to <strong style={{ color: '#f1f5f9' }}>{email}</strong>.<br />
+                Enter it below to activate your 7-day free trial.
               </p>
-              <button className="btn btn-primary" style={{ width: '100%', marginTop: 20, justifyContent: 'center' }}
+              <input
+                className="input"
+                type="text"
+                maxLength={6}
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="000000"
+                style={{ textAlign: 'center', fontSize: 28, fontWeight: 700, letterSpacing: 8, padding: '14px 0' }}
+              />
+              {otpError && (
+                <div style={{ color: 'var(--red)', fontSize: 13, marginTop: 10, padding: '8px 12px',
+                  background: 'rgba(244,63,94,0.1)', borderRadius: 8 }}>
+                  {otpError}
+                </div>
+              )}
+              <button className="btn btn-primary" style={{ width: '100%', marginTop: 16, justifyContent: 'center' }}
+                disabled={otpLoading || otpCode.length !== 6}
+                onClick={async () => {
+                  setOtpLoading(true)
+                  setOtpError(null)
+                  try {
+                    const { createClient } = await import('@supabase/supabase-js')
+                    const { supabase } = await import('../lib/supabase')
+                    const { error } = await supabase.auth.verifyOtp({ email, token: otpCode, type: 'signup' })
+                    if (error) throw error
+                  } catch (err) {
+                    setOtpError(err.message || 'Invalid code. Please try again.')
+                    setOtpLoading(false)
+                  }
+                }}>
+                {otpLoading ? 'Verifying...' : 'Verify email →'}
+              </button>
+              <button style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 13,
+                cursor: 'pointer', marginTop: 16, textDecoration: 'underline' }}
                 onClick={() => { setSignupDone(false); switchMode('login') }}>
                 Back to sign in
               </button>
