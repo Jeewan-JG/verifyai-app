@@ -7,8 +7,8 @@ const PLANS = [
   {
     name: 'Starter',
     tag: 'Most popular',
-    monthlyPrice: 49,
-    annualPrice: 39,
+    monthlyPrice: 25.99,
+    annualPrice: 19.99,
     description: 'Perfect for independent recruiters and small agencies.',
     features: [
       '50 CV analyses per month',
@@ -23,8 +23,8 @@ const PLANS = [
   {
     name: 'Agency',
     tag: null,
-    monthlyPrice: 199,
-    annualPrice: 159,
+    monthlyPrice: 105.99,
+    annualPrice: 84.49,
     description: 'For growing agencies processing high volumes.',
     features: [
       '500 CV analyses per month',
@@ -151,7 +151,7 @@ export default function PricingPage({ trialExpired = false }) {
               borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
           </button>
           <span style={{ fontSize: 13, color: annual ? '#f1f5f9' : '#64748b', fontWeight: 600 }}>
-            Annual <span style={{ color: '#14b8a6' }}>save 20%</span>
+            Annual <span style={{ color: '#14b8a6' }}>save 23%</span>
           </span>
         </div>
       </div>
