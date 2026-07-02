@@ -62,10 +62,12 @@ async def extract_candidate_details(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": EXTRACT_PROMPT},
-                {"role": "user", "content": cv_text[:6000]},
+                # Contact details live at the top of a CV — 3k chars is plenty
+                # and keeps the model call fast.
+                {"role": "user", "content": cv_text[:3000]},
             ],
             temperature=0,
-            max_tokens=150,
+            max_tokens=120,
             response_format={"type": "json_object"},
         )
         data = json.loads(response.choices[0].message.content)

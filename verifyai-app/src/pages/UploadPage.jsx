@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Upload, FileText, X, CheckCircle, Lock, AlertCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -16,9 +16,16 @@ export default function UploadPage() {
   const [error, setError]         = useState(null)
   const [extracting, setExtracting] = useState(false)
   const [autoFilled, setAutoFilled] = useState(false)
+  // Mirror of `form` for reading current values inside async callbacks,
+  // and a record of the values WE auto-filled (so a new CV can replace them
+  // while values the user typed by hand are never overwritten).
+  const formRef = useRef(form)
+  useEffect(() => { formRef.current = form }, [form])
+  const autoFilledRef = useRef({})
+  const FIELDS = ['full_name', 'email', 'role', 'location']
 
-  // Read the CV and pre-fill empty form fields — does NOT run the fraud
-  // analysis; that only happens when the user reviews details and submits.
+  // Read the CV and pre-fill form fields — does NOT run the fraud analysis;
+  // that only happens when the user reviews details and submits.
   const autofillFromCv = async (f) => {
     setExtracting(true)
     setAutoFilled(false)
@@ -33,17 +40,23 @@ export default function UploadPage() {
       })
       if (!res.ok) return
       const d = await res.json()
+
+      const cur = formRef.current
+      const next = { ...cur }
+      const filledNow = {}
       let filled = false
-      setForm(prev => {
-        const next = {
-          full_name: prev.full_name || d.full_name || '',
-          email:     prev.email     || d.email     || '',
-          role:      prev.role      || d.role      || '',
-          location:  prev.location  || d.location  || '',
-        }
-        filled = JSON.stringify(next) !== JSON.stringify(prev)
-        return next
-      })
+      for (const k of FIELDS) {
+        // A field is "hand-typed" if it's non-empty AND differs from the value
+        // we previously auto-filled — those we leave alone. Everything else
+        // (empty, or holding a prior CV's auto-filled value) gets replaced.
+        const wasAutoFilled = (cur[k] || '') === (autoFilledRef.current[k] || '')
+        if (cur[k] && !wasAutoFilled) continue
+        next[k] = d[k] || ''
+        filledNow[k] = next[k]
+        if (next[k] !== cur[k]) filled = true
+      }
+      autoFilledRef.current = filledNow
+      setForm(next)
       if (filled) setAutoFilled(true)
     } catch {
       // Silent — the user can simply fill the fields manually
