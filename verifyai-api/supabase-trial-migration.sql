@@ -60,24 +60,25 @@ where email = 'jeewang936@gmail.com';
 alter table public.candidates enable row level security;
 alter table public.analysis_results enable row level security;
 
+-- user_id::text = auth.uid()::text works whether user_id is text or uuid.
 drop policy if exists "candidates_select_own" on public.candidates;
 create policy "candidates_select_own" on public.candidates
-  for select using (user_id = auth.uid()::text or (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
+  for select using (user_id::text = auth.uid()::text or (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin');
 
 drop policy if exists "candidates_update_own" on public.candidates;
 create policy "candidates_update_own" on public.candidates
-  for update using (user_id = auth.uid()::text);
+  for update using (user_id::text = auth.uid()::text);
 
 drop policy if exists "candidates_delete_own" on public.candidates;
 create policy "candidates_delete_own" on public.candidates
-  for delete using (user_id = auth.uid()::text);
+  for delete using (user_id::text = auth.uid()::text);
 
 drop policy if exists "analysis_select_own" on public.analysis_results;
 create policy "analysis_select_own" on public.analysis_results
   for select using (
     exists (select 1 from public.candidates c
             where c.id = analysis_results.candidate_id
-              and (c.user_id = auth.uid()::text
+              and (c.user_id::text = auth.uid()::text
                    or (auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'))
   );
 
@@ -85,8 +86,5 @@ drop policy if exists "analysis_delete_own" on public.analysis_results;
 create policy "analysis_delete_own" on public.analysis_results
   for delete using (
     exists (select 1 from public.candidates c
-            where c.id = analysis_results.candidate_id and c.user_id = auth.uid()::text)
+            where c.id = analysis_results.candidate_id and c.user_id::text = auth.uid()::text)
   );
-
--- NOTE: if candidates.user_id is a uuid column (not text), replace
--- auth.uid()::text with auth.uid() in the policies above.
