@@ -34,11 +34,14 @@ const RiskBadge = ({ level }) => {
   )
 }
 
+// Confidence = how certain the AI is of its own assessment, NOT the candidate's
+// quality. Labelled explicitly so a good-but-not-perfect score isn't misread as
+// a near-perfect candidate.
 const confidenceLevel = (score) => {
   if (!score) return null
-  if (score >= 75) return { label: 'High Confidence', color: '#34d399', pct: '95%+' }
-  if (score >= 45) return { label: 'Medium Confidence', color: '#f5a524', pct: '70–90%' }
-  return { label: 'Low Confidence', color: '#f43f5e', pct: '<70%' }
+  if (score >= 75) return { label: 'High assessment confidence', color: '#34d399' }
+  if (score >= 45) return { label: 'Medium assessment confidence', color: '#f5a524' }
+  return { label: 'Low assessment confidence', color: '#f43f5e' }
 }
 
 const ScoreDial = ({ score }) => {
@@ -62,7 +65,7 @@ const ScoreDial = ({ score }) => {
       </div>
       {conf && (
         <div style={{ fontSize: 11, fontWeight: 600, color: conf.color, background: conf.color + '18', borderRadius: 20, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 4 }}>
-          <Info size={10} /> {conf.label} · {conf.pct}
+          <Info size={10} /> {conf.label}
         </div>
       )}
     </div>
@@ -211,6 +214,27 @@ export default function AnalysisPage() {
   const flags     = result?.fraud_flags || []
   const statusCfg = STATUS_OPTIONS.find(s => s.value === status) || STATUS_OPTIONS[0]
 
+  // The LinkedIn result found by the link scanner (from the CV itself) — the
+  // Trust Profile card uses this so it never contradicts the Link Verification
+  // section below (e.g. "No LinkedIn URL" while a scanned LinkedIn 404s).
+  const links       = result?.link_verification || []
+  const linkedinLink = links.find(l => /linkedin\.com/i.test(l.url || '') || /linkedin/i.test(l.type || ''))
+
+  // Links that couldn't be confirmed become "manual verification" items so the
+  // Risk section reflects them instead of claiming everything is clear.
+  const linkConcerns = links
+    .filter(l => ['suspicious', 'inaccessible', 'unverified', 'login_required'].includes(l.status))
+    .map(l => ({
+      title: l.status === 'suspicious'      ? 'Link content contradicts CV claims'
+           : l.status === 'inaccessible'    ? 'Link could not be reached (dead or blocked)'
+           : l.status === 'login_required'  ? 'Link requires login to verify'
+           : 'Link could not be automatically verified',
+      description: `${l.type ? l.type + ' — ' : ''}${l.url}${l.finding ? ' · ' + l.finding : ''}`,
+      severity: l.status === 'suspicious' ? 'high' : 'low',
+    }))
+  const totalConcerns = flags.length + linkConcerns.length
+  const hasHigh = flags.some(f => f.severity === 'high') || linkConcerns.some(c => c.severity === 'high')
+
   return (
     <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 900, margin: '0 auto' }}>
 
@@ -334,8 +358,21 @@ export default function AnalysisPage() {
             {
               label: 'LinkedIn Consistency',
               Icon: Link,
-              status: candidate?.linkedin_url ? 'pending' : 'coming',
-              desc: candidate?.linkedin_url ? 'Profile URL provided — analysis coming' : 'No LinkedIn URL provided',
+              // Reflect the actual scan of the LinkedIn link found in the CV so
+              // this card agrees with the Link Verification section below.
+              status: linkedinLink
+                ? (linkedinLink.status === 'verified' ? 'verified'
+                   : linkedinLink.status === 'suspicious' ? 'risk'
+                   : linkedinLink.status === 'inaccessible' ? 'risk'
+                   : 'review')
+                : (candidate?.linkedin_url ? 'review' : 'coming'),
+              desc: linkedinLink
+                ? (linkedinLink.status === 'verified' ? 'Profile scanned — consistent with CV'
+                   : linkedinLink.status === 'inaccessible' ? 'Profile link is inaccessible (404) — verify manually'
+                   : linkedinLink.status === 'login_required' ? 'Profile requires login — verify manually'
+                   : linkedinLink.status === 'suspicious' ? 'Profile content does not match CV'
+                   : 'Profile found — could not be fully verified')
+                : (candidate?.linkedin_url ? 'Profile URL provided' : 'No LinkedIn URL found in CV'),
             },
             {
               label: 'Qualification Verification',
@@ -404,7 +441,10 @@ export default function AnalysisPage() {
               {result.summary && <p style={{ fontSize: 12, color: 'var(--text-2)', textAlign: 'center', maxWidth: 160, lineHeight: 1.5 }}>{result.summary}</p>}
             </div>
             <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 11 }}>Trust Signal Breakdown</div>
+              <div>
+                <div style={{ fontWeight: 600, fontSize: 11, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Trust Signal Breakdown</div>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 3 }}>Each signal scored 0–100 · higher = stronger authenticity, lower = higher risk</div>
+              </div>
               {DIMS.map(d => {
                 const val = result[d.key]
                 const color = scoreColor(val || 0)
@@ -446,34 +486,18 @@ export default function AnalysisPage() {
             </div>
           )}
 
-          {/* Two-column: evidence + recruiter confidence */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-
-            {/* Signal Evidence */}
+          {/* Recruiter Confidence — grouped by recommended action.
+              (The per-signal scores live in Trust Signal Breakdown above; no
+              need to restate them here.) */}
+          <div>
             <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Signal Evidence</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {DIMS.map(d => {
-                  const val = result[d.key]
-                  if (!val) return null
-                  const color = scoreColor(val)
-                  const icon = val >= 70 ? '✓' : val >= 40 ? '⚠' : '✗'
-                  return (
-                    <div key={d.key} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12 }}>
-                      <span style={{ color, flexShrink: 0, fontWeight: 700, minWidth: 14 }}>{icon}</span>
-                      <span style={{ color: 'var(--text-2)', lineHeight: 1.4 }}>
-                        <span style={{ color: 'var(--text)', fontWeight: 500 }}>{d.label}</span>
-                        <span style={{ color: 'var(--text-3)' }}> — {val}/100</span>
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Recommended Action</div>
 
-            {/* Recruiter Confidence Metrics */}
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Recruiter Confidence</div>
+              {linkConcerns.length > 0 && (
+                <div style={{ fontSize: 12, color: '#f5a524', background: 'rgba(245,165,36,0.08)', border: '1px solid rgba(245,165,36,0.25)', borderRadius: 8, padding: '8px 12px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <AlertTriangle size={13} style={{ flexShrink: 0 }} /> {linkConcerns.length} external link{linkConcerns.length > 1 ? 's' : ''} need manual verification — see Risk Intelligence Signals below
+                </div>
+              )}
 
               {DIMS.filter(d => (result[d.key] || 0) >= 70).length > 0 && (
                 <div style={{ marginBottom: 14 }}>
@@ -612,20 +636,23 @@ export default function AnalysisPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
           <div>
             <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ShieldAlert size={15} color={flags.length > 0 ? '#f43f5e' : '#34d399'} /> Risk Intelligence Signals
-              {flags.length > 0 && <span style={{ background: '#f43f5e22', color: '#f43f5e', borderRadius: 10, padding: '2px 8px', fontSize: 12 }}>{flags.length} signal{flags.length > 1 ? 's' : ''}</span>}
+              <ShieldAlert size={15} color={totalConcerns > 0 ? (hasHigh ? '#f43f5e' : '#f5a524') : '#34d399'} /> Risk Intelligence Signals
+              {totalConcerns > 0 && <span style={{ background: (hasHigh ? '#f43f5e' : '#f5a524') + '22', color: hasHigh ? '#f43f5e' : '#f5a524', borderRadius: 10, padding: '2px 8px', fontSize: 12 }}>{totalConcerns} item{totalConcerns > 1 ? 's' : ''}</span>}
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Evidence-based fraud indicators and authenticity anomalies</div>
+            <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Fraud indicators, authenticity anomalies, and items that could not be automatically verified</div>
           </div>
         </div>
-        {flags.length === 0 ? (
+        {!result ? (
           <div style={{ color: 'var(--text-2)', fontSize: 13, padding: '20px 0', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            {result
-              ? <><ShieldCheck size={16} color="#34d399" /> No risk signals detected — candidate authenticity verified across all dimensions</>
-              : <><Clock size={16} color="var(--text-3)" /> Risk signals will appear after trust intelligence runs</>}
+            <Clock size={16} color="var(--text-3)" /> Risk signals will appear after trust intelligence runs
+          </div>
+        ) : totalConcerns === 0 ? (
+          <div style={{ color: 'var(--text-2)', fontSize: 13, padding: '20px 0', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <ShieldCheck size={16} color="#34d399" /> No fraud signals detected, and all external links were verified
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* Fraud signals from the CV analysis */}
             {flags.map((flag, i) => {
               const sigColor = flag.severity === 'high' ? '#f43f5e' : flag.severity === 'medium' ? '#f5a524' : '#34d399'
               return (
@@ -640,6 +667,32 @@ export default function AnalysisPage() {
                 </div>
               )
             })}
+
+            {/* Verification gaps from link scanning — a dead/unconfirmed link is
+                not proven fraud, but the recruiter must check it manually. */}
+            {linkConcerns.length > 0 && (
+              <>
+                {flags.length > 0 && (
+                  <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 6 }}>
+                    Automated verification gaps — review manually
+                  </div>
+                )}
+                {linkConcerns.map((c, i) => {
+                  const sigColor = c.severity === 'high' ? '#f43f5e' : '#f5a524'
+                  return (
+                    <div key={'lc' + i} style={{ padding: '14px 16px', background: 'var(--bg-3)', borderRadius: 8, borderLeft: `3px solid ${sigColor}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, alignItems: 'flex-start', gap: 8 }}>
+                        <span style={{ fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <AlertTriangle size={13} color={sigColor} /> {c.title}
+                        </span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: sigColor, background: sigColor + '22', borderRadius: 6, padding: '2px 8px', textTransform: 'uppercase', letterSpacing: '0.04em', flexShrink: 0 }}>{c.severity === 'high' ? 'high risk' : 'verify'}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.5, wordBreak: 'break-word' }}>{c.description}</div>
+                    </div>
+                  )
+                })}
+              </>
+            )}
           </div>
         )}
       </div>
@@ -650,7 +703,7 @@ export default function AnalysisPage() {
           <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
             <BookOpen size={15} color="var(--teal)" /> Recruiter Decision Log
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Document decision rationale for audit trail and compliance. All entries are timestamped and immutable once saved.</div>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Document decision rationale for your audit trail. Entries are timestamped and saved against this candidate.</div>
         </div>
         <textarea
           value={notes}
@@ -681,8 +734,8 @@ export default function AnalysisPage() {
             { label: 'GDPR Lawful Basis',   value: 'UK GDPR Art. 6(1)(f)',         ok: true  },
             { label: 'EU AI Act',            value: 'Human oversight active',        ok: true  },
             { label: 'Explainability',       value: 'Evidence-based scoring',        ok: true  },
-            { label: 'Data Retention',       value: '12 months from upload',         ok: true  },
-            { label: 'Audit Trail',          value: 'Complete & immutable',          ok: true  },
+            { label: 'Data Retention',       value: 'Policy: 12 months',             ok: true  },
+            { label: 'Audit Trail',          value: 'Timestamped decision log',      ok: true  },
             { label: 'Right to Review',      value: 'Candidate can request report',  ok: true  },
           ].map(item => (
             <div key={item.label} style={{ background: 'var(--bg-3)', borderRadius: 8, padding: '10px 14px', border: '1px solid var(--line)' }}>
