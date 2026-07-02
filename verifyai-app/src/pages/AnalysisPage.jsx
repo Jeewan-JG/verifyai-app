@@ -1,6 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+
+// Everything the page needs except cv_text (which can be tens of KB per row)
+const CANDIDATE_COLS = 'id, full_name, email, role, location, status, notes, linkedin_url, created_at, analysis_results(*)'
 import { ArrowLeft, Mail, RefreshCw, FileText, MapPin, Calendar, Tag, Clock, ShieldCheck, ShieldAlert, AlertTriangle, Save, ExternalLink, Trash2, Lock, Info, BookOpen, Fingerprint, Award, Zap, Video, Link } from 'lucide-react'
 
 const DIMS = [
@@ -78,13 +81,16 @@ export default function AnalysisPage() {
   const [notesSaved, setNotesSaved] = useState(false)
   const [status, setStatus]         = useState('pending')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // Cancels the poll loop when the user navigates away mid-analysis
+  const cancelledRef = useRef(false)
+  useEffect(() => () => { cancelledRef.current = true }, [])
 
   useEffect(() => {
     if (!candidateId) { setLoading(false); return }
     const load = async () => {
       const { data } = await supabase
         .from('candidates')
-        .select('*, analysis_results(*)')
+        .select(CANDIDATE_COLS)
         .eq('id', candidateId)
         .single()
       if (data) {
@@ -105,7 +111,11 @@ export default function AnalysisPage() {
     showToast('Analysis started — results in ~20 seconds')
     const startedAt = new Date()
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/analysis/run/${candidateId}`, { method: 'POST' })
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/analysis/run/${candidateId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token || ''}` },
+      })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
         throw new Error(err.detail || `Analysis request failed (${res.status})`)
@@ -113,7 +123,9 @@ export default function AnalysisPage() {
       // Poll until a result newer than startedAt appears, or 90 s elapses
       const deadline = Date.now() + 90000
       const poll = async () => {
-        const { data } = await supabase.from('candidates').select('*, analysis_results(*)').eq('id', candidateId).single()
+        if (cancelledRef.current) return
+        const { data } = await supabase.from('candidates').select(CANDIDATE_COLS).eq('id', candidateId).single()
+        if (cancelledRef.current) return
         const newResult = data?.analysis_results?.[0]
         if (newResult && new Date(newResult.created_at) > startedAt) {
           setCandidate(data)

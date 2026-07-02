@@ -54,7 +54,12 @@ export default async function handler(req, res) {
       const { error } = await supabase.auth.admin.updateUserById(userId, {
         app_metadata: { plan: 'paid', paid_plan: plan }
       })
-      if (error) console.error('Supabase update error:', error.message)
+      if (error) {
+        console.error('Supabase update error:', error.message)
+        // Non-2xx makes Stripe retry the webhook — otherwise a paying
+        // customer would silently never get upgraded.
+        return res.status(500).json({ error: 'Failed to update user plan' })
+      }
     }
   }
 
@@ -66,7 +71,10 @@ export default async function handler(req, res) {
       const { error } = await supabase.auth.admin.updateUserById(userId, {
         app_metadata: { plan: 'expired' }
       })
-      if (error) console.error('Supabase update error:', error.message)
+      if (error) {
+        console.error('Supabase update error:', error.message)
+        return res.status(500).json({ error: 'Failed to update user plan' })
+      }
     }
   }
 

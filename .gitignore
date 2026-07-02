@@ -21,3 +21,7 @@ verifyai-app/.env.local
 .DS_Store
 *.zip
 Screenshot*.png
+
+# Secrets — never commit tokens
+.github-token.txt
+*.token

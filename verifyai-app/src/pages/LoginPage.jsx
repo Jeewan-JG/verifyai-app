@@ -216,6 +216,30 @@ export default function LoginPage() {
   const [otpCode, setOtpCode] = useState('')
   const [otpError, setOtpError] = useState(null)
   const [otpLoading, setOtpLoading] = useState(false)
+  const [otpVerified, setOtpVerified] = useState(false)
+
+  const completeSignup = async () => {
+    setOtpLoading(true)
+    setOtpError(null)
+    try {
+      // Step 1: verify the emailed code (skipped on retry if already done)
+      if (!otpVerified) {
+        const { error } = await supabase.auth.verifyOtp({ email, token: otpCode, type: 'email' })
+        if (error) throw error
+        setOtpVerified(true)
+      }
+      // Step 2: set the password + company name. The 7-day trial is granted
+      // server-side (app_metadata, via DB trigger) — never from the client.
+      const { error: updateError } = await supabase.auth.updateUser({
+        password,
+        data: { company_name: company },
+      })
+      if (updateError) throw updateError
+    } catch (err) {
+      setOtpError(err.message || 'Invalid code. Please try again.')
+      setOtpLoading(false)
+    }
+  }
 
   const switchMode = (m) => {
     setMode(m)
@@ -348,25 +372,9 @@ export default function LoginPage() {
                 </div>
               )}
               <button className="btn btn-primary" style={{ width: '100%', marginTop: 16, justifyContent: 'center' }}
-                disabled={otpLoading || otpCode.length !== 6}
-                onClick={async () => {
-                  setOtpLoading(true)
-                  setOtpError(null)
-                  try {
-                    const { error } = await supabase.auth.verifyOtp({ email, token: otpCode, type: 'email' })
-                    if (error) throw error
-                    // Update password and company name after verification
-                    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-                    await supabase.auth.updateUser({
-                      password,
-                      data: { company_name: company, trial_ends_at: trialEndsAt }
-                    })
-                  } catch (err) {
-                    setOtpError(err.message || 'Invalid code. Please try again.')
-                    setOtpLoading(false)
-                  }
-                }}>
-                {otpLoading ? 'Verifying...' : 'Verify email →'}
+                disabled={otpLoading || (!otpVerified && otpCode.length !== 6)}
+                onClick={completeSignup}>
+                {otpLoading ? 'Verifying...' : otpVerified ? 'Retry account setup →' : 'Verify email →'}
               </button>
               <button style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 13,
                 cursor: 'pointer', marginTop: 16, textDecoration: 'underline' }}

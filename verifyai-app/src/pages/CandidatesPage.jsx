@@ -26,6 +26,11 @@ const ScoreBar = ({ score }) => {
   )
 }
 
+// Format a Date as YYYY-MM-DD in LOCAL time — toISOString() converts to UTC,
+// which shifts the day for users east of UTC (e.g. picking "5 Jun" gave "4 Jun").
+const toLocalISO = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
 // Mini calendar date-range picker component
 function DateRangePicker({ from, to, onChange, onClear }) {
   const [open, setOpen]         = useState(false)
@@ -52,8 +57,7 @@ function DateRangePicker({ from, to, onChange, onClear }) {
   const nextMonth = () => setViewDate(new Date(y, m + 1, 1))
 
   const handleDayClick = (day) => {
-    const d = new Date(y, m, day)
-    const iso = d.toISOString().slice(0, 10)
+    const iso = toLocalISO(new Date(y, m, day))
     if (picking === 'from') {
       onChange({ from: iso, to: to && iso > to ? iso : to })
       setPicking('to')
@@ -138,10 +142,10 @@ function DateRangePicker({ from, to, onChange, onClear }) {
           {/* Quick presets */}
           <div style={{ display: 'flex', gap: 6, marginTop: 12, flexWrap: 'wrap' }}>
             {[
-              { label: 'Today',    fn: () => { const d = new Date().toISOString().slice(0,10); onChange({ from: d, to: d }); setOpen(false) }},
-              { label: 'Last 7d',  fn: () => { const t = new Date(), f = new Date(t); f.setDate(f.getDate()-6); onChange({ from: f.toISOString().slice(0,10), to: t.toISOString().slice(0,10) }); setOpen(false) }},
-              { label: 'Last 30d', fn: () => { const t = new Date(), f = new Date(t); f.setDate(f.getDate()-29); onChange({ from: f.toISOString().slice(0,10), to: t.toISOString().slice(0,10) }); setOpen(false) }},
-              { label: 'This month', fn: () => { const n = new Date(); onChange({ from: `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-01`, to: n.toISOString().slice(0,10) }); setOpen(false) }},
+              { label: 'Today',    fn: () => { const d = toLocalISO(new Date()); onChange({ from: d, to: d }); setOpen(false) }},
+              { label: 'Last 7d',  fn: () => { const t = new Date(), f = new Date(t); f.setDate(f.getDate()-6); onChange({ from: toLocalISO(f), to: toLocalISO(t) }); setOpen(false) }},
+              { label: 'Last 30d', fn: () => { const t = new Date(), f = new Date(t); f.setDate(f.getDate()-29); onChange({ from: toLocalISO(f), to: toLocalISO(t) }); setOpen(false) }},
+              { label: 'This month', fn: () => { const n = new Date(); onChange({ from: `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-01`, to: toLocalISO(n) }); setOpen(false) }},
             ].map(p => (
               <button key={p.label} className="btn btn-sm" style={{ fontSize: 11, padding: '3px 8px' }} onClick={p.fn}>{p.label}</button>
             ))}
@@ -165,7 +169,7 @@ export default function CandidatesPage() {
     const load = async () => {
       const { data, error } = await supabase
         .from('candidates')
-        .select('*, analysis_results(*)')
+        .select('id, full_name, email, role, location, status, created_at, analysis_results(trust_score, risk_level)')
         .order('created_at', { ascending: false })
       if (!error) setCandidates(data || [])
       setLoading(false)

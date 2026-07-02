@@ -40,42 +40,33 @@ export const AuthProvider = ({ children }) => {
     return data
   }
 
-  const signUp = async (email, password, companyName) => {
-    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          company_name: companyName,
-          trial_ends_at: trialEndsAt,
-        },
-        emailRedirectTo: undefined,
-      }
-    })
-    if (error) throw error
-    return data
-  }
-
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
   }
 
-  // Trial helpers — null means owner/admin account (no trial set)
-  const trialEndsAt = user?.user_metadata?.trial_ends_at ?? null
+  // Trial helpers. trial_ends_at is read from app_metadata, which only the
+  // server (service role) can write — users cannot extend their own trial.
+  // user_metadata is a legacy fallback for accounts created before the
+  // supabase-trial-migration.sql backfill ran; remove it once that's applied.
+  const appMeta = user?.app_metadata ?? {}
+  const isPaidUser = appMeta.plan === 'paid'
+  const isAdmin = appMeta.role === 'admin'
+  const trialEndsAt = appMeta.trial_ends_at ?? user?.user_metadata?.trial_ends_at ?? null
   const trialDaysLeft = trialEndsAt
     ? Math.max(0, Math.ceil((new Date(trialEndsAt) - Date.now()) / (1000 * 60 * 60 * 24)))
     : null
-  const isTrialExpired = trialEndsAt ? new Date(trialEndsAt) < new Date() : false
-  const isPaidUser = user?.app_metadata?.plan === 'paid'
-  const isOnTrial = !!trialEndsAt && !isTrialExpired && !isPaidUser
+  // No trial date at all now means NO access (previously it meant unlimited
+  // access, so deleting the key from the console granted a free account).
+  const isTrialExpired = !!user && !isPaidUser && !isAdmin &&
+    (!trialEndsAt || new Date(trialEndsAt) < new Date())
+  const isOnTrial = !!trialEndsAt && !isTrialExpired && !isPaidUser && !isAdmin
 
   return (
     <AuthContext.Provider value={{
       user, loading,
-      signInWithGoogle, signInWithEmail, signUp, signOut,
-      trialDaysLeft, isTrialExpired, isOnTrial, isPaidUser,
+      signInWithGoogle, signInWithEmail, signOut,
+      trialDaysLeft, isTrialExpired, isOnTrial, isPaidUser, isAdmin,
     }}>
       {children}
     </AuthContext.Provider>

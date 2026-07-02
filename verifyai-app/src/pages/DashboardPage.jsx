@@ -69,14 +69,15 @@ export default function DashboardPage() {
 
   const load = async () => {
     try {
+      // Fetch ALL candidates (lightweight columns only — no cv_text) so the
+      // KPI cards reflect the whole pipeline; the table shows the first 5.
       const { data, error } = await supabase
         .from('candidates')
-        .select('*, analysis_results(*)')
+        .select('id, full_name, email, role, status, created_at, analysis_results(trust_score, risk_level)')
         .order('created_at', { ascending: false })
-        .limit(5)
       if (error) throw error
       const all = data || []
-      setCandidates(all)
+      setCandidates(all.slice(0, 5))
       const scores   = all.flatMap(c => c.analysis_results?.map(r => r.trust_score) || [])
       const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0
       setStats({
@@ -104,12 +105,10 @@ export default function DashboardPage() {
   const deleteSelected = async () => {
     setDeleting(true)
     try {
-      for (const id of selected) {
-        const { error: e1 } = await supabase.from('analysis_results').delete().eq('candidate_id', id)
-        if (e1) { console.error('Delete analysis_results error:', e1); throw e1 }
-        const { error: e2 } = await supabase.from('candidates').delete().eq('id', id)
-        if (e2) { console.error('Delete candidates error:', e2); throw e2 }
-      }
+      const { error: e1 } = await supabase.from('analysis_results').delete().in('candidate_id', selected)
+      if (e1) { console.error('Delete analysis_results error:', e1); throw e1 }
+      const { error: e2 } = await supabase.from('candidates').delete().in('id', selected)
+      if (e2) { console.error('Delete candidates error:', e2); throw e2 }
     } catch (err) {
       alert(`Delete failed: ${err.message}\n\nPlease run the DELETE RLS policies in Supabase SQL Editor.`)
       setDeleting(false)
