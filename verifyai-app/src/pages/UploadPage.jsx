@@ -14,12 +14,50 @@ export default function UploadPage() {
   const [saving, setSaving]       = useState(false)
   const [success, setSuccess]     = useState(false)
   const [error, setError]         = useState(null)
+  const [extracting, setExtracting] = useState(false)
+  const [autoFilled, setAutoFilled] = useState(false)
+
+  // Read the CV and pre-fill empty form fields — does NOT run the fraud
+  // analysis; that only happens when the user reviews details and submits.
+  const autofillFromCv = async (f) => {
+    setExtracting(true)
+    setAutoFilled(false)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const fd = new FormData()
+      fd.append('file', f)
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/upload/extract`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session?.access_token || ''}` },
+        body: fd,
+      })
+      if (!res.ok) return
+      const d = await res.json()
+      let filled = false
+      setForm(prev => {
+        const next = {
+          full_name: prev.full_name || d.full_name || '',
+          email:     prev.email     || d.email     || '',
+          role:      prev.role      || d.role      || '',
+          location:  prev.location  || d.location  || '',
+        }
+        filled = JSON.stringify(next) !== JSON.stringify(prev)
+        return next
+      })
+      if (filled) setAutoFilled(true)
+    } catch {
+      // Silent — the user can simply fill the fields manually
+    } finally {
+      setExtracting(false)
+    }
+  }
 
   const pickFile = (incoming) => {
     const f = Array.from(incoming).find(f => ACCEPTED.includes(f.type) && f.size <= 15 * 1024 * 1024)
     if (f) {
       setFile(f)
       setError(null)
+      autofillFromCv(f)
     } else {
       setError('Please upload a PDF, DOCX or TXT file under 15MB.')
     }
@@ -89,7 +127,20 @@ export default function UploadPage() {
 
         {/* Candidate details */}
         <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 12, padding: 24 }}>
-          <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 18 }}>Candidate Details</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18, flexWrap: 'wrap' }}>
+            <div style={{ fontWeight: 600, fontSize: 15 }}>Candidate Details</div>
+            {extracting && (
+              <span style={{ fontSize: 12, color: 'var(--text-2)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 10, height: 10, border: '2px solid var(--teal)', borderTopColor: 'transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
+                Reading CV to auto-fill details...
+              </span>
+            )}
+            {!extracting && autoFilled && (
+              <span style={{ fontSize: 12, color: 'var(--teal)', background: 'rgba(20,184,166,0.1)', borderRadius: 20, padding: '2px 10px' }}>
+                ✓ Auto-filled from CV — check before running
+              </span>
+            )}
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div className="field">
               <label>Full name *</label>

@@ -948,6 +948,12 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ── New animations ─────────────────────────────────────────── */
+/* Used by the CV auto-fill spinner (UploadPage) and the re-run icon (AnalysisPage) */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 @keyframes bellShake {
   0%,100% { transform: rotate(0deg); }
   15%      { transform: rotate(14deg); }
