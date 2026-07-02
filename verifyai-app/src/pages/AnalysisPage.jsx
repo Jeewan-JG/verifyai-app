@@ -80,8 +80,10 @@ export default function AnalysisPage() {
   const [loading, setLoading]     = useState(true)
   const [toast, setToast]         = useState(null)
   const [rerunning, setRerunning]   = useState(false)
-  const [notes, setNotes]           = useState('')
-  const [notesSaved, setNotesSaved] = useState(false)
+  const [notes, setNotes]           = useState('')       // legacy single note (read-only if present)
+  const [logEntries, setLogEntries] = useState([])       // append-only decision log
+  const [newNote, setNewNote]       = useState('')
+  const [savingNote, setSavingNote] = useState(false)
   const [status, setStatus]         = useState('pending')
   const [confirmDelete, setConfirmDelete] = useState(false)
   // Cancels the poll loop when the user navigates away mid-analysis
@@ -105,7 +107,17 @@ export default function AnalysisPage() {
       setLoading(false)
     }
     load()
+    loadLog()
   }, [candidateId])
+
+  const loadLog = async () => {
+    const { data } = await supabase
+      .from('decision_log')
+      .select('note, author_email, created_at')
+      .eq('candidate_id', candidateId)
+      .order('created_at', { ascending: false })
+    setLogEntries(data || [])
+  }
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3500) }
 
@@ -149,10 +161,25 @@ export default function AnalysisPage() {
     }
   }
 
-  const saveNotes = async () => {
-    await supabase.from('candidates').update({ notes }).eq('id', candidateId)
-    setNotesSaved(true)
-    setTimeout(() => setNotesSaved(false), 2000)
+  // Append a new immutable entry to the decision log (never overwrites history)
+  const addLogEntry = async () => {
+    const note = newNote.trim()
+    if (!note) return
+    setSavingNote(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await supabase.from('decision_log').insert({
+      candidate_id: candidateId,
+      note,
+      author_email: user?.email || null,
+    })
+    setSavingNote(false)
+    if (error) {
+      showToast('Could not save entry — run the decision_log migration in Supabase')
+      return
+    }
+    setNewNote('')
+    showToast('Entry added to decision log')
+    loadLog()
   }
 
   const changeStatus = async (newStatus) => {
@@ -223,11 +250,12 @@ export default function AnalysisPage() {
   // Links that couldn't be confirmed become "manual verification" items so the
   // Risk section reflects them instead of claiming everything is clear.
   const linkConcerns = links
-    .filter(l => ['suspicious', 'inaccessible', 'unverified', 'login_required'].includes(l.status))
+    .filter(l => ['suspicious', 'inaccessible', 'unverified', 'login_required', 'unrenderable'].includes(l.status))
     .map(l => ({
       title: l.status === 'suspicious'      ? 'Link content contradicts CV claims'
            : l.status === 'inaccessible'    ? 'Link could not be reached (dead or blocked)'
            : l.status === 'login_required'  ? 'Link requires login to verify'
+           : l.status === 'unrenderable'    ? 'Link needs JavaScript — verify manually'
            : 'Link could not be automatically verified',
       description: `${l.type ? l.type + ' — ' : ''}${l.url}${l.finding ? ' · ' + l.finding : ''}`,
       severity: l.status === 'suspicious' ? 'high' : 'low',
@@ -568,6 +596,7 @@ export default function AnalysisPage() {
                   suspicious:     { color: '#f43f5e', label: '✗ Suspicious',     bg: 'rgba(244,63,94,0.07)'   },
                   inaccessible:   { color: '#64748b', label: '✗ Inaccessible',   bg: 'var(--bg-3)'             },
                   login_required: { color: '#a78bfa', label: '⚠ Login Required', bg: 'rgba(167,139,250,0.07)' },
+                  unrenderable:   { color: '#60a5fa', label: '◐ Dynamic page',   bg: 'rgba(96,165,250,0.07)' },
                 }[lv.status] || { color: '#64748b', label: '? Unknown', bg: 'var(--bg-3)' }
 
                 return (
@@ -703,22 +732,52 @@ export default function AnalysisPage() {
           <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
             <BookOpen size={15} color="var(--teal)" /> Recruiter Decision Log
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Document decision rationale for your audit trail. Entries are timestamped and saved against this candidate.</div>
+          <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 3 }}>Append-only audit trail. Each entry is timestamped, attributed to its author, and permanent — entries cannot be edited or deleted once saved.</div>
         </div>
+
+        {/* Append a new, permanent entry */}
         <textarea
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          placeholder="Record your decision rationale — interview observations, verification steps taken, reasons for progression or rejection. This log forms part of the compliance audit trail."
-          style={{ width: '100%', minHeight: 110, background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', resize: 'vertical', outline: 'none', fontFamily: 'inherit', lineHeight: 1.6 }}
+          value={newNote}
+          onChange={e => setNewNote(e.target.value)}
+          placeholder="Record your decision rationale — interview observations, verification steps taken, reasons for progression or rejection. Once saved, this becomes a permanent part of the audit trail."
+          style={{ width: '100%', minHeight: 90, background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'var(--text)', resize: 'vertical', outline: 'none', fontFamily: 'inherit', lineHeight: 1.6 }}
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, flexWrap: 'wrap', gap: 8 }}>
           <span style={{ fontSize: 11, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <Lock size={10} /> Stored securely · Included in compliance exports
+            <Lock size={10} /> Immutable once saved · Included in compliance exports
           </span>
-          <button className="btn btn-sm btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6 }} onClick={saveNotes}>
-            <Save size={13} /> {notesSaved ? 'Saved!' : 'Save to decision log'}
+          <button className="btn btn-sm btn-primary" style={{ display: 'flex', alignItems: 'center', gap: 6, opacity: (!newNote.trim() || savingNote) ? 0.6 : 1 }} onClick={addLogEntry} disabled={!newNote.trim() || savingNote}>
+            <Save size={13} /> {savingNote ? 'Adding...' : 'Add entry'}
           </button>
         </div>
+
+        {/* Immutable history — newest first */}
+        {(logEntries.length > 0 || notes) && (
+          <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+              Audit trail · {logEntries.length + (notes ? 1 : 0)} {logEntries.length + (notes ? 1 : 0) === 1 ? 'entry' : 'entries'}
+            </div>
+            {logEntries.map((e, i) => (
+              <div key={i} style={{ background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-2)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <Lock size={9} /> {e.author_email || 'Recruiter'}
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                    {new Date(e.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{e.note}</div>
+              </div>
+            ))}
+            {notes && (
+              <div style={{ background: 'var(--bg-3)', border: '1px dashed var(--line)', borderRadius: 8, padding: '12px 14px' }}>
+                <div style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 6, fontWeight: 600 }}>Legacy note (recorded before the audit log)</div>
+                <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{notes}</div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Compliance & Governance */}

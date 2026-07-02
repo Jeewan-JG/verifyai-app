@@ -247,6 +247,17 @@ def _fetch_single_link(url: str) -> dict:
         ]
         is_login_wall = any(p in text.lower()[:600] for p in login_phrases)
 
+        # Detect single-page apps that render via JavaScript (e.g. Tableau Public,
+        # many dashboards). The page loads fine but the raw HTML has almost no
+        # readable content — this is a tooling limitation, NOT a candidate red
+        # flag, so we mark it distinctly rather than calling it "unverified".
+        js_markers = ['enable javascript', 'requires javascript',
+                      "doesn't work properly without javascript", 'please enable js',
+                      'you need to enable javascript']
+        needs_js = (not is_login_wall) and (
+            len(text) < 200 or any(m in r.text.lower()[:5000] for m in js_markers)
+        )
+
         return {
             'accessible': True,
             'status_code': r.status_code,
@@ -254,6 +265,7 @@ def _fetch_single_link(url: str) -> dict:
             'content': text[:2500],
             'final_url': str(r.url),
             'login_required': is_login_wall,
+            'js_required': needs_js,
         }
 
     except Exception as e:
@@ -370,9 +382,20 @@ def verify_links_with_gpt(cv_text: str, links_with_content: list) -> list:
         raw = response.choices[0].message.content.strip()
         parsed = json.loads(raw)
         # Prompt asks for {"results": [...]}, but accept a bare array too for resilience
-        if isinstance(parsed, dict):
-            return parsed.get("results", [])
-        return parsed if isinstance(parsed, list) else []
+        results = parsed.get("results", []) if isinstance(parsed, dict) else (parsed if isinstance(parsed, list) else [])
+
+        # Deterministic override: a page we couldn't read because it renders via
+        # JavaScript is "unrenderable" (a tooling gap), not "unverified/suspicious"
+        # — so an honest-but-uncheckable link (e.g. Tableau) isn't shown as a red flag.
+        meta_by_url = {m.get('url'): m for m in links_with_content}
+        for res in results:
+            meta = meta_by_url.get(res.get('url'))
+            if meta and meta.get('js_required') and res.get('status') != 'suspicious':
+                res['status'] = 'unrenderable'
+                res['finding'] = ("Page renders its content with JavaScript, which the automated "
+                                  "scanner cannot execute — verify this link manually. "
+                                  + (res.get('finding') or '')).strip()
+        return results
     except Exception as e:
         print(f"[LinkVerify] GPT call failed: {e}")
         return []
